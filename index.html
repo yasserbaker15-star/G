@@ -1,556 +1,208 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
-
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>📊 مقارنة التقارير</title>
+    <title>محلل النصوص - النسخة الذهبية الكاملة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --gold: #e0ca51;
-            --bg: #222;
-            --panel-bg: rgba(0, 0, 0, 0.85);
-            --line: rgba(224, 202, 81, 0.20);
-            --ok: #65d46e;
-            --warn: #ff7b7b;
-            --note: #6db7ff;
-            --orange: #ffb347;
+        textarea { resize: none; }
+        
+        /* خلفية ضبابية للعناصر */
+        .glass {
+            backdrop-filter: blur(12px);
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .btn { transition: 0.3s; }
+        .btn:hover { transform: scale(1.03); filter: brightness(1.1); }
+        
+        /* --- اللون الموحد لجميع العناصر --- */
+        .gold-theme {
+            background-color: #D9C563 !important;
+            color: black !important;
+            font-weight: bold !important;
+            border: 1px solid rgba(0,0,0,0.1);
         }
 
-        html,
-        body {
-            height: 100%
+        /* تنسيق النصوص داخل الحقول */
+        input.gold-theme { color: black !important; }
+        input.gold-theme::placeholder { color: rgba(0, 0, 0, 0.5) !important; }
+
+        /* تنسيق القوائم المنسدلة */
+        select.gold-theme option {
+            background-color: white !important;
+            color: black !important;
         }
 
-        * {
-            box-sizing: border-box
-        }
-
-        body {
-            margin: 0;
-            font-family: Tahoma, Arial, sans-serif;
-            color: var(--gold);
-            text-align: center;
-            direction: rtl;
-            background-color: #111;
-            background-image: url("https://raw.githubusercontent.com/xhhp1/SOMTINGHNEW/main/pic.png");
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: cover;
-            background-attachment: fixed;
-        }
-
-        .app {
-            min-height: 100vh;
-            padding: 32px 18px;
-            backdrop-filter: blur(4px);
-            background: rgba(0, 0, 0, 0.30);
-        }
-
-        .container {
-            width: min(980px, 100%);
-            margin: 0 auto;
-            background: var(--panel-bg);
-            border: 1px solid rgba(224, 202, 81, 0.18);
-            border-radius: 24px;
-            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-            padding: 28px;
-        }
-
-        h1 {
-            margin: 0 0 10px;
-            font-size: 30px;
-            color: var(--gold);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
-        }
-
-        .sub {
-            margin: 0 0 26px;
-            color: #f2e7a3;
-            font-size: 15px;
-            opacity: .95;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 16px;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
-        }
-
-        label {
-            display: block;
-            text-align: right;
-            margin: 0 0 10px;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--gold);
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 280px;
-            resize: vertical;
-            border: none;
-            outline: none;
-            border-radius: 14px;
-            padding: 14px;
-            font-family: Tahoma, Arial, sans-serif;
-            font-size: 15px;
-            line-height: 1.8;
-            color: var(--gold);
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid rgba(224, 202, 81, 0.18);
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-        }
-
-        textarea::placeholder {
-            color: #d9cb84;
-            opacity: .75;
-        }
-
-        .actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 8px 0 22px;
-        }
-
-        button {
-            border: none;
-            cursor: pointer;
-            border-radius: 14px;
-            padding: 13px 22px;
-            font-family: Tahoma, Arial, sans-serif;
-            font-size: 15px;
-            font-weight: 700;
-            transition: .18s ease;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-        }
-
-        .main-btn {
-            background: linear-gradient(180deg, #ecd96f 0%, #d2b93f 100%);
-            color: #1b1b1b;
-            box-shadow: 0 10px 24px rgba(224, 202, 81, 0.22);
-        }
-
-        .clear-btn {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--gold);
-            border: 1px solid rgba(224, 202, 81, 0.25);
-        }
-
-        .results-wrap {
-            text-align: right;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 18px;
-        }
-
-        .results-title {
-            margin: 0 0 14px;
-            font-size: 22px;
-            text-align: center;
-        }
-
-        .result-box {
-            background: rgba(0, 0, 0, 0.36);
-            border: 1px solid rgba(224, 202, 81, 0.13);
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-
-        .result-box:last-child {
-            margin-bottom: 0;
-        }
-
-        .result-box h3 {
-            margin: 0 0 10px;
-            font-size: 17px;
-        }
-
-        .result-box .empty {
-            opacity: .8;
-        }
-
-        .result-box ul {
-            margin: 0;
-            padding-right: 18px;
-        }
-
-        .result-box li {
-            margin: 6px 0;
-            word-break: break-word;
-        }
-
-        .shared h3 {
-            color: var(--ok)
-        }
-
-        .only-supervisor h3 {
-            color: var(--warn)
-        }
-
-        .only-technical h3 {
-            color: var(--orange)
-        }
-
-        .duplicate h3 {
-            color: var(--note)
-        }
-
-        .time-box h3 {
-            color: #9ee37d
-        }
-
-        .time-good {
-            color: var(--ok);
-            font-weight: 700;
-        }
-
-        .time-bad {
-            color: var(--warn);
-            font-weight: 700;
-        }
-
-        .time-info {
-            color: #f5e79c;
-        }
-
-        .copy-btn {
-            margin-top: 12px;
-            width: 100%;
-            background: rgba(224, 202, 81, 0.10);
-            color: var(--gold);
-            border: 1px solid rgba(224, 202, 81, 0.22);
-        }
-
-        .footer-note {
-            margin-top: 14px;
-            font-size: 13px;
-            color: #e9db90;
-            opacity: .85;
-        }
-
-        .code-like {
-            background: rgba(255, 255, 255, 0.06);
-            padding: 2px 8px;
-            border-radius: 8px;
-            display: inline-block;
-            margin: 2px 0;
-        }
-
-        @media (max-width: 800px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .container {
-                padding: 18px;
-            }
-
-            textarea {
-                min-height: 220px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
+        /* إخفاء حدود الفوكس الافتراضية */
+        .gold-theme:focus {
+            outline: 2px solid rgba(0,0,0,0.2);
         }
     </style>
 </head>
 
-<body>
-    <div class="app">
-        <div class="container">
-            <h1>📊 مقارنة التقارير</h1>
-            <p class="sub">يقارن المنشنات والأكواد المكررة، ويشيّك أيضًا على صحة الوقت بين تقرير المشرف وتقرير الفني.</p>
-            <div class="grid">
-                <div class="card"><label for="supervisorText">تقرير المشرف</label> <textarea id="supervisorText" placeholder="ألصق هنا تقرير المشرف..."></textarea></div>
-                <div class="card"><label for="technicalText">تقرير الفني</label> <textarea id="technicalText" placeholder="ألصق هنا تقرير الفني..."></textarea></div>
+<body class="min-h-screen bg-cover bg-center" style="background-image: url('https://i.postimg.cc/FF6ydVNz/Chat-GPT-Image-8-abryl-2026-11-35-51-m.png');">
+
+<div class="w-full max-w-7xl mx-auto p-6">
+    <h1 class="text-4xl font-extrabold mb-8 text-center text-white drop-shadow-lg">
+        📋 قسم الجرد + الترقيات (النظام الذهبي الموحد)
+    </h1>
+
+    <div class="flex flex-col lg:flex-row gap-6">
+        <div class="w-full lg:w-80 glass p-5 rounded-2xl shadow-xl">
+            <h2 class="text-white mb-4 font-bold text-center text-lg border-b border-white/20 pb-2">
+                ⚙️ أدوات الترقيات
+            </h2>
+
+            <div class="flex flex-col gap-3">
+                <label class="text-white text-sm">حدد المستوى المطلوب فحصه:</label>
+                <select id="levelSelect" class="w-full p-2.5 rounded-lg gold-theme cursor-pointer">
+                    <option value="trainee">متدرب ⟵ مستوى 1 (4 نقاط)</option>
+                    <option value="1">مستوى 1 ⟵ مستوى 2 (8 نقاط)</option>
+                    <option value="2">مستوى 2 ⟵ مستوى 3 (14 نقطة)</option>
+                    <option value="3">مستوى 3 ⟵ مستوى 4 (21 نقطة)</option>
+                    <option value="4">مستوى 4 ⟵ مستوى 5 (28 نقطة)</option>
+                </select>
+
+                <button onclick="filterQualified()" class="btn py-2.5 rounded-lg gold-theme shadow-md">
+                    🏆 المستحقين (حسب الشروط)
+                </button>
+
+                <hr class="border-white/10 my-1">
+
+                <input id="startCode" type="number" placeholder="🔢 بداية الكود" class="w-full p-2.5 rounded-lg gold-theme">
+                
+                <button onclick="filterNotQualified()" class="btn py-2.5 rounded-lg gold-theme">
+                    ⚡ توزيع ذكي (لغير المستحقين)
+                </button>
+
+                <button onclick="filterNotQualifiedOnly()" class="btn py-2.5 rounded-lg gold-theme">
+                    ❌ عرض غير المستحقين فقط
+                </button>
+
+                <button onclick="reassignCodes()" class="btn py-2.5 rounded-lg gold-theme">
+                    🔄 إعادة توزيع الأكواد
+                </button>
+
+                <button onclick="resetFields()" class="btn py-2.5 rounded-lg gold-theme mt-2 shadow-lg">
+                    🗑️ مسح الكل
+                </button>
             </div>
-            <div class="actions"><button class="main-btn" onclick="compareReports()">🚀 مقارنة الآن</button> <button class="clear-btn" onclick="clearAllFields()">🗑️ مسح الكل</button></div>
-            <div class="results-wrap">
-                <h2 class="results-title">النتائج</h2>
-                <div id="results"><br></div><button class="copy-btn" onclick="copyResults()">📋 نسخ النتائج</button>
-                <div class="footer-note">التحقق الزمني يقارن نهاية تقرير المشرف مع بداية تقرير الفني، ويعرض أي خطأ واضح في الفترة الزمنية.</div>
+        </div>
+
+        <div class="flex-1">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="w-full md:w-1/2 glass p-4 rounded-2xl shadow-xl">
+                    <h2 class="text-white text-center mb-3 font-bold">✍️ إدخال النص الأصلي</h2>
+                    <textarea id="inputText" class="w-full h-72 p-3 rounded-lg bg-black/60 text-white border border-white/10" placeholder="الصق السجلات هنا..."></textarea>
+                    <button onclick="analyzeText()" class="btn w-full mt-3 py-2.5 rounded-lg gold-theme">تحليل سريع</button>
+                </div>
+
+                <div class="w-full md:w-1/2 glass p-4 rounded-2xl shadow-xl">
+                    <h2 class="text-white text-center mb-3 font-bold">🧹 النتيجة المستخرجة</h2>
+                    <textarea id="cleanedText" class="w-full h-72 p-3 rounded-lg bg-black/60 text-green-400 border border-white/10" readonly></textarea>
+                    <button onclick="copyText()" class="btn w-full mt-3 py-2.5 rounded-lg gold-theme">📋 نسخ النتيجة</button>
+                </div>
+            </div>
+
+            <div class="mt-8 glass p-5 rounded-2xl shadow-xl border border-yellow-400/30">
+                <h2 class="text-white text-center mb-3 font-bold text-lg">📋 نموذج إعلان الترقيات الجاهز</h2>
+                <button onclick="generatePromotionForm()" class="btn w-full mb-3 py-3 rounded-lg gold-theme shadow-xl">
+                    ⚡ توليد نموذج الترقيات للمستحقين
+                </button>
+                <textarea id="promotionBox" class="w-full h-64 p-3 rounded-lg bg-black/60 text-yellow-100 border border-white/10" readonly></textarea>
+                <button onclick="copyPromotion()" class="btn w-full mt-2 py-2.5 rounded-lg gold-theme">📋 نسخ النموذج للإرسال</button>
             </div>
         </div>
     </div>
-    <script>
-        function unique(arr){
-          return [...new Set(arr)];
-        }
-        
-        function findDuplicates(arr){
-          const counts = {};
-          arr.forEach(item => counts[item] = (counts[item] || 0) + 1);
-          return Object.keys(counts).filter(key => counts[key] > 1);
-        }
-        
-        function escapeHtml(str){
-          return String(str)
-            .replaceAll('&', '&')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
-        }
-        
-        function renderList(items){
-          if(!items.length) return '<div class="empty">لا يوجد</div>';
-          return `<ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
-        }
-        
-        function normalizeArabicDigits(str){
-          const arabicNums = '٠١٢٣٤٥٦٧٨٩';
-          const englishNums = '0123456789';
-          return String(str).replace(/[٠-٩]/g, d => englishNums[arabicNums.indexOf(d)]);
-        }
-        
-        function cleanText(str){
-          return normalizeArabicDigits(str)
-            .replace(/\u200f|\u200e/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-        }
-        
-        function parseArabicMeridiem(value){
-          value = cleanText(value);
-          if(value.includes('ص')) return 'AM';
-          if(value.includes('م')) return 'PM';
-          return null;
-        }
-        
-        function parseTimeToMinutes(hour, minute, meridiem){
-          hour = parseInt(hour, 10);
-          minute = parseInt(minute, 10);
-        
-          if(isNaN(hour) || isNaN(minute) || !meridiem) return null;
-        
-          if(hour === 12){
-            hour = (meridiem === 'AM') ? 0 : 12;
-          } else if(meridiem === 'PM'){
-            hour += 12;
-          }
-        
-          return hour * 60 + minute;
-        }
-        
-        function minutesToArabicTime(totalMinutes){
-          if(totalMinutes == null || isNaN(totalMinutes)) return 'غير معروف';
-        
-          let hour24 = Math.floor(totalMinutes / 60) % 24;
-          let minute = totalMinutes % 60;
-        
-          let meridiem = hour24 >= 12 ? 'م' : 'ص';
-          let hour12 = hour24 % 12;
-          if(hour12 === 0) hour12 = 12;
-        
-          return `${hour12}:${String(minute).padStart(2,'0')} ${meridiem}`;
-        }
-        
-        function formatRange(range){
-          if(!range) return 'لم يتم العثور على الوقت';
-          return `${minutesToArabicTime(range.start)} → ${minutesToArabicTime(range.end)}`;
-        }
-        
-        function extractSupervisorTime(text){
-          const t = cleanText(text);
-        
-          const regex = /من\s*الساعة\s*\(?\s*(\d{1,2})\s*:\s*(\d{2})\s*([صم])\s*\)?\s*الى\s*الساعة\s*\(?\s*(\d{1,2})\s*:\s*(\d{2})\s*([صم])\s*\)?/i;
-          const match = t.match(regex);
-        
-          if(!match) return null;
-        
-          const start = parseTimeToMinutes(match[1], match[2], parseArabicMeridiem(match[3]));
-          const end = parseTimeToMinutes(match[4], match[5], parseArabicMeridiem(match[6]));
-        
-          return {
-            start,
-            end,
-            raw: match[0]
-          };
-        }
-        
-        function extractTechnicalTime(text){
-          const t = cleanText(text);
-        
-          const regex = /من\s*الساعه\s*(\d{1,2})\s*:\s*(\d{2})\s*\(?\s*([صم])\s*\)?\s*حتى\s*الساعه\s*(\d{1,2})\s*:\s*(\d{2})\s*\(?\s*([صم])\s*\)?/i;
-          const match = t.match(regex);
-        
-          if(!match) return null;
-        
-          const start = parseTimeToMinutes(match[1], match[2], parseArabicMeridiem(match[3]));
-          const end = parseTimeToMinutes(match[4], match[5], parseArabicMeridiem(match[6]));
-        
-          return {
-            start,
-            end,
-            raw: match[0]
-          };
-        }
-        
-        function validateTimeRange(label, range){
-          if(!range){
-            return {
-              valid:false,
-              message:`لم يتم العثور على وقت ${label}.`
-            };
-          }
-        
-          if(range.start == null || range.end == null){
-            return {
-              valid:false,
-              message:`تعذر قراءة وقت ${label} بشكل صحيح.`
-            };
-          }
-        
-          if(range.end <= range.start){
-            return {
-              valid:false,
-              message:`وقت ${label} غير صحيح: النهاية ليست بعد البداية.`
-            };
-          }
-        
-          return {
-            valid:true,
-            message:`وقت ${label} صحيح مبدئيًا.`
-          };
-        }
-        
-        function checkTimeMatch(supervisorRange, technicalRange){
-          if(!supervisorRange || !technicalRange){
-            return {
-              ok:false,
-              message:'تعذر التحقق من تطابق الوقت لأن أحد التقريرين لا يحتوي على وقت واضح.'
-            };
-          }
-        
-          if(supervisorRange.end === technicalRange.start){
-            return {
-              ok:true,
-              message:'الوقت متطابق: نهاية تقرير المشرف تساوي بداية تقرير الفني.'
-            };
-          }
-        
-          return {
-            ok:false,
-            message:`الوقت غير متطابق: نهاية تقرير المشرف هي ${minutesToArabicTime(supervisorRange.end)} بينما بداية تقرير الفني هي ${minutesToArabicTime(technicalRange.start)}.`
-          };
-        }
-        
-        function compareReports(){
-          const supText = document.getElementById('supervisorText').value || '';
-          const techText = document.getElementById('technicalText').value || '';
-        
-          const mentionRegex = /<@\d+>/g;
-          const codeRegex = /\bG-\d{3,}\b/g;
-        
-          const supMentions = supText.match(mentionRegex) || [];
-          const techMentions = techText.match(mentionRegex) || [];
-        
-          const uniqueSupMentions = unique(supMentions);
-          const uniqueTechMentions = unique(techMentions);
-        
-          const sharedMentions = uniqueSupMentions.filter(m => uniqueTechMentions.includes(m));
-          const onlySupervisor = uniqueSupMentions.filter(m => !uniqueTechMentions.includes(m));
-          const onlyTechnical = uniqueTechMentions.filter(m => !uniqueSupMentions.includes(m));
-        
-          const supCodes = supText.match(codeRegex) || [];
-          ***** techCodes = techText.match(codeRegex) || [];
-        
-          const supDuplicates = findDuplicates(supCodes);
-          const techDuplicates = findDuplicates(techCodes);
-        
-          const ************** = extractSupervisorTime(supText);
-          const ************* = extractTechnicalTime(techText);
-        
-          const ******************* = validateTimeRange('تقرير المشرف', supervisorTime);
-          const technicalTimeCheck = validateTimeRange('تقرير الفني', technicalTime);
-          const timeMatchCheck = checkTimeMatch(supervisorTime, technicalTime);
-        
-          ***** *********** = `
-            <div class="result-box time-box">
-              <h3>⏰ التحقق من الوقت</h3>
-              <div class="time-info"><strong>وقت تقرير المشرف:</strong> <span class="code-like">${escapeHtml(formatRange(supervisorTime))}</span></div>
-              <div class="${supervisorTimeCheck.valid ? 'time-good' : 'time-bad'}" style="margin-top:8px;">
-                ${escapeHtml(supervisorTimeCheck.message)}
-              </div>
-        
-              <div class="time-info" style="margin-top:14px;"><strong>وقت تقرير الفني:</strong> <span class="code-like">${escapeHtml(formatRange(technicalTime))}</span></div>
-              <div class="${technicalTimeCheck.valid ? 'time-good' : 'time-bad'}" style="margin-top:8px;">
-                ${escapeHtml(technicalTimeCheck.message)}
-              </div>
-        
-              <div class="${timeMatchCheck.ok ? 'time-good' : 'time-bad'}" style="margin-top:14px;">
-                ${escapeHtml(timeMatchCheck.message)}
-              </div>
-            </div>
-        
-            <div class="result-box shared">
-              <h3>✅ المنشنات المشتركة</h3>
-              ${renderList(sharedMentions)}
-            </div>
-        
-            <div class="result-box only-supervisor">
-              <h3>❌ منشنات موجودة في تقرير المشرف فقط</h3>
-              ${renderList(onlySupervisor)}
-            </div>
-        
-            <div class="result-box only-technical">
-              <h3>❌ منشنات موجودة في تقرير الفني فقط</h3>
-              ${renderList(onlyTechnical)}
-            </div>
-        
-            <div class="result-box duplicate">
-              <h3>🔵 الأكواد المكررة في تقرير المشرف</h3>
-              ${renderList(supDuplicates)}
-            </div>
-        
-            <div class="result-box duplicate">
-              <h3>🔵 الأكواد المكررة في تقرير الفني</h3>
-              ${renderList(techDuplicates)}
-            </div>
-          `;
-        
-          document.getElementById('results').innerHTML = resultsHTML;
-        }
-        
-        function clearAllFields(){
-          document.getElementById('supervisorText').value = '';
-          document.getElementById('technicalText').value = '';
-          document.getElementById('results').innerHTML = '';
-        }
-        
-        function copyResults(){
-          const results = document.getElementById('results').innerText.trim();
-          if(!results){
-            alert('لا توجد نتائج لنسخها.');
-            return;
-          }
-        
-          navigator.clipboard.writeText(results)
-            .then(() => alert('تم نسخ النتائج.'))
-            .catch(() => alert('تعذر نسخ النتائج.'));
-        }
-    </script>
 
-<div style="color: red">Word to HTML trial - please <a href="https://wordtohtml.net/site/payment">Go PRO</a> to get whole HTML.</div>
+    <p id="counter" class="text-center text-yellow-400 font-bold mt-4 text-lg drop-shadow-md"></p>
+</div>
+
+<script>
+// منطق البرمجة الخاص بالفرز والترقيات
+function getPromotionLevels() {
+    const level = document.getElementById("levelSelect").value;
+    const map = { "trainee": ["متدرب", "1"], "1": ["1", "2"], "2": ["2", "3"], "3": ["3", "4"], "4": ["4", "5"] };
+    return map[level] || ["?", "?"];
+}
+
+function parseLines() {
+    const text = document.getElementById('inputText').value;
+    const currentLevel = document.getElementById("levelSelect").value;
+    const pointsConfig = { "trainee": 4, "1": 8, "2": 14, "3": 21, "4": 28 };
+    const requiredPoints = pointsConfig[currentLevel] || 0;
+    const seen = new Set();
+
+    return text.split("\n").map(line => {
+        if (!line.trim() || line.includes("منصب شاغر")) return null;
+        const idMatch = line.match(/<@[^>]+>/);
+        const id = idMatch ? idMatch[0] : null;
+        if (!id || seen.has(id)) return null;
+        seen.add(id);
+
+        const checks = (line.match(/✅/g) || []).length;
+        let points = 0;
+        const pMatch = line.match(/(?:النقاط\s*[:=]?\s*(\d+))|(?:(\d+)\s*(?:نقطة|نقاط|نقطه))/i);
+        if (pMatch) points = parseInt(pMatch[1] || pMatch[2]);
+        else {
+            const nums = line.replace(/<@[^>]+>/g, '').match(/\d+/g);
+            if (nums) points = parseInt(nums[nums.length - 1]);
+        }
+
+        return { id, checks, points, qualified: (checks >= 2 && points >= requiredPoints) };
+    }).filter(x => x);
+}
+
+function analyzeText(){
+    const data = parseLines();
+    document.getElementById("cleanedText").value = data.map(d => `${d.id} | الصح: ${d.checks} | النقاط: ${d.points}`).join("\n");
+}
+
+function filterQualified(){
+    const data = parseLines().filter(d => d.qualified);
+    document.getElementById("cleanedText").value = data.map(d => `${d.id}`).join("\n");
+    document.getElementById("counter").textContent = `✅ المستحقون: ${data.length}`;
+}
+
+function filterNotQualifiedOnly(){
+    const data = parseLines().filter(d => !d.qualified);
+    document.getElementById("cleanedText").value = data.map(d => `${d.id}`).join("\n");
+}
+
+function filterNotQualified(){
+    let start = parseInt(document.getElementById("startCode").value);
+    if (isNaN(start)) { alert("ضع بداية الكود أولاً"); return; }
+    const data = parseLines().filter(d => !d.qualified);
+    document.getElementById("cleanedText").value = data.map((d, i) => `${d.id} G-${start + i}`).join("\n");
+}
+
+function reassignCodes(){
+    const data = parseLines().filter(d => d.qualified);
+    document.getElementById("cleanedText").value = data.map((d,i) => `${d.id} G-${400+i}`).join("\n");
+}
+
+function generatePromotionForm() {
+    const data = parseLines().filter(d => d.qualified);
+    const levels = getPromotionLevels();
+    if (data.length === 0) {
+        document.getElementById("promotionBox").value = "⚠️ لا يوجد مستحقين حالياً.";
+        return;
+    }
+    document.getElementById("promotionBox").value = `*** ▬▬▬ ﷽ ▬▬▬\n\`\`\`diff\n- الموضوع: ترقيات مستوى (${levels[0]}) .\n\`\`\`\n\`\`\`cs\n# بعد الاطلاع على نظام الترقيات واحصائيات السجلات\n\`\`\`\n\`\`\`\nأولا: ترقية التاليه أسمائهم من مستوى (${levels[0]}) الى مستوى (${levels[1]})\n\`\`\`\n${data.map(d => d.id).join("\n")}`;
+    document.getElementById("counter").textContent = `📋 تم التوليد لـ ${data.length}`;
+}
+
+function copyText(){ navigator.clipboard.writeText(document.getElementById("cleanedText").value); alert("تم النسخ!"); }
+function copyPromotion(){ navigator.clipboard.writeText(document.getElementById("promotionBox").value); alert("تم نسخ النموذج!"); }
+function resetFields(){
+    document.getElementById("inputText").value = "";
+    document.getElementById("cleanedText").value = "";
+    document.getElementById("promotionBox").value = "";
+    document.getElementById("counter").textContent = "";
+    document.getElementById("startCode").value = "";
+}
+</script>
 </body>
-
 </html>
