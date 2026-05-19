@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>📊 مقارنة التقارير</title>
+    <style>
+        :root {
+            --gold: #e0ca51;
+            --bg: #222;
+            --panel-bg: rgba(0, 0, 0, 0.85);
+            --line: rgba(224, 202, 81, 0.20);
+            --ok: #65d46e;
+            --warn: #ff7b7b;
+            --note: #6db7ff;
+            --orange: #ffb347;
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            color: var(--gold);
+            text-align: center;
+            direction: rtl;
+            background-color: #111;
+            background-image: url("https://raw.githubusercontent.com/xhhp1/SOMTINGHNEW/main/pic.png");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .app {
+            min-height: 100vh;
+            padding: 32px 18px;
+            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.30);
+        }
+
+        .container {
+            width: min(980px, 100%);
+            margin: 0 auto;
+            background: var(--panel-bg);
+            border: 1px solid rgba(224, 202, 81, 0.18);
+            border-radius: 24px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+            color: var(--gold);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+        }
+
+        .sub {
+            margin: 0 0 26px;
+            color: #f2e7a3;
+            font-size: 15px;
+            opacity: .95;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+        }
+
+        label {
+            display: block;
+            text-align: right;
+            margin: 0 0 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 280px;
+            resize: vertical;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            padding: 14px;
+            font-family: Tahoma, Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--gold);
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(224, 202, 81, 0.18);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+
+        textarea::placeholder {
+            color: #d9cb84;
+            opacity: .75;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 8px 0 22px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 14px;
+            padding: 13px 22px;
+            font-family: Tahoma, Arial, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            transition: .18s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .main-btn {
+            background: linear-gradient(180deg, #ecd96f 0%, #d2b93f 100%);
+            color: #1b1b1b;
+            box-shadow: 0 10px 24px rgba(224, 202, 81, 0.22);
+        }
+
+        .clear-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--gold);
+            border: 1px solid rgba(224, 202, 81, 0.25);
+        }
+
+        .results-wrap {
+            text-align: right;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        .results-title {
+            margin: 0 0 14px;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        .result-box {
+            background: rgba(0, 0, 0, 0.36);
+            border: 1px solid rgba(224, 202, 81, 0.13);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .result-box:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-box h3 {
+            margin: 0 0 10px;
+            font-size: 17px;
+        }
+
+        .result-box .empty {
+            opacity: .8;
+        }
+
+        .result-box ul {
+            margin: 0;
+            padding-right: 18px;
+        }
+
+        .result-box li {
+            margin: 6px 0;
+            word-break: break-word;
+        }
+
+        .shared h3 {
+            color: var(--ok)
+        }
+
+        .only-supervisor h3 {
+            color: var(--warn)
+        }
+
+        .only-technical h3 {
+            color: var(--orange)
+        }
+
+        .duplicate h3 {
+            color: var(--note)
+        }
+
+        .time-box h3 {
+            color: #9ee37d
+        }
+
+        .time-good {
+            color: var(--ok);
+            font-weight: 700;
+        }
+
+        .time-bad {
+            color: var(--warn);
+            font-weight: 700;
+        }
+
+        .time-info {
+            color: #f5e79c;
+        }
+
+        .copy-btn {
+            margin-top: 12px;
+            width: 100%;
+            background: rgba(224, 202, 81, 0.10);
+            color: var(--gold);
+            border: 1px solid rgba(224, 202, 81, 0.22);
+        }
+
+        .footer-note {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #e9db90;
+            opacity: .85;
+        }
+
+        .code-like {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 8px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        @media (max-width: 800px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 18px;
+            }
+
+            textarea {
+                min-height: 220px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="container">
+            <h1>📊 مقارنة التقارير</h1>
+            <p class="sub">يقارن المنشنات والأكواد المكررة، ويشيّك أيضًا على صحة الوقت بين تقرير المشرف وتقرير الفني.</p>
+            <div class="grid">
+                <div class="card"><label for="supervisorText">تقرير المشرف</label> <textarea id="supervisorText" placeholder="ألصق هنا تقرير المشرف..."></textarea></div>
+                <div class="card"><label for="technicalText">تقرير الفني</label> <textarea id="technicalText" placeholder="ألصق هنا تقرير الفني..."></textarea></div>
+            </div>
+            <div class="actions"><button class="main-btn" onclick="compareReports()">🚀 مقارنة الآن</button> <button class="clear-btn" onclick="clearAllFields()">🗑️ مسح الكل</button></div>
+            <div class="results-wrap">
+                <h2 class="results-title">النتائج</h2>
+                <div id="results"><br></div><button class="copy-btn" onclick="copyResults()">📋 نسخ النتائج</button>
+                <div class="footer-note">التحقق الزمني يقارن نهاية تقرير المشرف مع بداية تقرير الفني، ويعرض أي خطأ واضح في الفترة الزمنية.</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function unique(arr){
+          return [...new Set(arr)];
+        }
+        
+        function findDuplicates(arr){
+          const counts = {};
+          arr.forEach(item => counts[item] = (counts[item] || 0) + 1);
+          return Object.keys(counts).filter(key => counts[key] > 1);
+        }
+        
+        function escapeHtml(str){
+          return String(str)
+            .replaceAll('&', '&')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+        }
+        
+        function renderList(items){
+          if(!items.length) return '<div class="empty">لا يوجد</div>';
+          return `<ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+        }
+        
+        function normalizeArabicDigits(str){
+          const arabicNums = '٠١٢٣٤٥٦٧٨٩';
+          const englishNums = '0123456789';
+          return String(str).replace(/[٠-٩]/g, d => englishNums[arabicNums.indexOf(d)]);
+        }
+        
+        function cleanText(str){
+          return normalizeArabicDigits(str)
+            .replace(/\u200f|\u200e/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        }
+        
+        function parseArabicMeridiem(value){
+          value = cleanText(value);
+          if(value.includes('ص')) return 'AM';
+          if(value.includes('م')) return 'PM';
+          return null;
+        }
+        
+        function parseTimeToMinutes(hour, minute, meridiem){
+          hour = parseInt(hour, 10);
+          minute = parseInt(minute, 10);
+        
+          if(isNaN(hour) || isNaN(minute) || !meridiem) return null;
+        
+          if(hour === 12){
+            hour = (meridiem === 'AM') ? 0 : 12;
+          } else if(meridiem === 'PM'){
+            hour += 12;
+          }
+        
+          return hour * 60 + minute;
+        }
+        
+        function minutesToArabicTime(totalMinutes){
+          if(totalMinutes == null || isNaN(totalMinutes)) return 'غير معروف';
+        
+          let hour24 = Math.floor(totalMinutes / 60) % 24;
+          let minute = totalMinutes % 60;
+        
+          let meridiem = hour24 >= 12 ? 'م' : 'ص';
+          let hour12 = hour24 % 12;
+          if(hour12 === 0) hour12 = 12;
+        
+          return `${hour12}:${String(minute).padStart(2,'0')} ${meridiem}`;
+        }
+        
+        function formatRange(range){
+          if(!range) return 'لم يتم العثور على الوقت';
+          return `${minutesToArabicTime(range.start)} → ${minutesToArabicTime(range.end)}`;
+        }
+        
+        function extractSupervisorTime(text){
+          const t = cleanText(text);
+        
+          const regex = /من\s*الساعة\s*\(?\s*(\d{1,2})\s*:\s*(\d{2})\s*([صم])\s*\)?\s*الى\s*الساعة\s*\(?\s*(\d{1,2})\s*:\s*(\d{2})\s*([صم])\s*\)?/i;
+          const match = t.match(regex);
+        
+          if(!match) return null;
+        
+          const start = parseTimeToMinutes(match[1], match[2], parseArabicMeridiem(match[3]));
+          const end = parseTimeToMinutes(match[4], match[5], parseArabicMeridiem(match[6]));
+        
+          return {
+            start,
+            end,
+            raw: match[0]
+          };
+        }
+        
+        function extractTechnicalTime(text){
+          const t = cleanText(text);
+        
+          const regex = /من\s*الساعه\s*(\d{1,2})\s*:\s*(\d{2})\s*\(?\s*([صم])\s*\)?\s*حتى\s*الساعه\s*(\d{1,2})\s*:\s*(\d{2})\s*\(?\s*([صم])\s*\)?/i;
+          const match = t.match(regex);
+        
+          if(!match) return null;
+        
+          const start = parseTimeToMinutes(match[1], match[2], parseArabicMeridiem(match[3]));
+          const end = parseTimeToMinutes(match[4], match[5], parseArabicMeridiem(match[6]));
+        
+          return {
+            start,
+            end,
+            raw: match[0]
+          };
+        }
+        
+        function validateTimeRange(label, range){
+          if(!range){
+            return {
+              valid:false,
+              message:`لم يتم العثور على وقت ${label}.`
+            };
+          }
+        
+          if(range.start == null || range.end == null){
+            return {
+              valid:false,
+              message:`تعذر قراءة وقت ${label} بشكل صحيح.`
+            };
+          }
+        
+          if(range.end <= range.start){
+            return {
+              valid:false,
+              message:`وقت ${label} غير صحيح: النهاية ليست بعد البداية.`
+            };
+          }
+        
+          return {
+            valid:true,
+            message:`وقت ${label} صحيح مبدئيًا.`
+          };
+        }
+        
+        function checkTimeMatch(supervisorRange, technicalRange){
+          if(!supervisorRange || !technicalRange){
+            return {
+              ok:false,
+              message:'تعذر التحقق من تطابق الوقت لأن أحد التقريرين لا يحتوي على وقت واضح.'
+            };
+          }
+        
+          if(supervisorRange.end === technicalRange.start){
+            return {
+              ok:true,
+              message:'الوقت متطابق: نهاية تقرير المشرف تساوي بداية تقرير الفني.'
+            };
+          }
+        
+          return {
+            ok:false,
+            message:`الوقت غير متطابق: نهاية تقرير المشرف هي ${minutesToArabicTime(supervisorRange.end)} بينما بداية تقرير الفني هي ${minutesToArabicTime(technicalRange.start)}.`
+          };
+        }
+        
+        function compareReports(){
+          const supText = document.getElementById('supervisorText').value || '';
+          const techText = document.getElementById('technicalText').value || '';
+        
+          const mentionRegex = /<@\d+>/g;
+          const codeRegex = /\bG-\d{3,}\b/g;
+        
+          const supMentions = supText.match(mentionRegex) || [];
+          const techMentions = techText.match(mentionRegex) || [];
+        
+          const uniqueSupMentions = unique(supMentions);
+          const uniqueTechMentions = unique(techMentions);
+        
+          const sharedMentions = uniqueSupMentions.filter(m => uniqueTechMentions.includes(m));
+          const onlySupervisor = uniqueSupMentions.filter(m => !uniqueTechMentions.includes(m));
+          const onlyTechnical = uniqueTechMentions.filter(m => !uniqueSupMentions.includes(m));
+        
+          const supCodes = supText.match(codeRegex) || [];
+          ***** techCodes = techText.match(codeRegex) || [];
+        
+          const supDuplicates = findDuplicates(supCodes);
+          const techDuplicates = findDuplicates(techCodes);
+        
+          const ************** = extractSupervisorTime(supText);
+          const ************* = extractTechnicalTime(techText);
+        
+          const ******************* = validateTimeRange('تقرير المشرف', supervisorTime);
+          const technicalTimeCheck = validateTimeRange('تقرير الفني', technicalTime);
+          const timeMatchCheck = checkTimeMatch(supervisorTime, technicalTime);
+        
+          ***** *********** = `
+            <div class="result-box time-box">
+              <h3>⏰ التحقق من الوقت</h3>
+              <div class="time-info"><strong>وقت تقرير المشرف:</strong> <span class="code-like">${escapeHtml(formatRange(supervisorTime))}</span></div>
+              <div class="${supervisorTimeCheck.valid ? 'time-good' : 'time-bad'}" style="margin-top:8px;">
+                ${escapeHtml(supervisorTimeCheck.message)}
+              </div>
+        
+              <div class="time-info" style="margin-top:14px;"><strong>وقت تقرير الفني:</strong> <span class="code-like">${escapeHtml(formatRange(technicalTime))}</span></div>
+              <div class="${technicalTimeCheck.valid ? 'time-good' : 'time-bad'}" style="margin-top:8px;">
+                ${escapeHtml(technicalTimeCheck.message)}
+              </div>
+        
+              <div class="${timeMatchCheck.ok ? 'time-good' : 'time-bad'}" style="margin-top:14px;">
+                ${escapeHtml(timeMatchCheck.message)}
+              </div>
+            </div>
+        
+            <div class="result-box shared">
+              <h3>✅ المنشنات المشتركة</h3>
+              ${renderList(sharedMentions)}
+            </div>
+        
+            <div class="result-box only-supervisor">
+              <h3>❌ منشنات موجودة في تقرير المشرف فقط</h3>
+              ${renderList(onlySupervisor)}
+            </div>
+        
+            <div class="result-box only-technical">
+              <h3>❌ منشنات موجودة في تقرير الفني فقط</h3>
+              ${renderList(onlyTechnical)}
+            </div>
+        
+            <div class="result-box duplicate">
+              <h3>🔵 الأكواد المكررة في تقرير المشرف</h3>
+              ${renderList(supDuplicates)}
+            </div>
+        
+            <div class="result-box duplicate">
+              <h3>🔵 الأكواد المكررة في تقرير الفني</h3>
+              ${renderList(techDuplicates)}
+            </div>
+          `;
+        
+          document.getElementById('results').innerHTML = resultsHTML;
+        }
+        
+        function clearAllFields(){
+          document.getElementById('supervisorText').value = '';
+          document.getElementById('technicalText').value = '';
+          document.getElementById('results').innerHTML = '';
+        }
+        
+        function copyResults(){
+          const results = document.getElementById('results').innerText.trim();
+          if(!results){
+            alert('لا توجد نتائج لنسخها.');
+            return;
+          }
+        
+          navigator.clipboard.writeText(results)
+            .then(() => alert('تم نسخ النتائج.'))
+            .catch(() => alert('تعذر نسخ النتائج.'));
+        }
+    </script>
+
+<div style="color: red">Word to HTML trial - please <a href="https://wordtohtml.net/site/payment">Go PRO</a> to get whole HTML.</div>
+</body>
+
+</html>
