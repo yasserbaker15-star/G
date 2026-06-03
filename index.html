@@ -2,207 +2,903 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>محلل النصوص - النسخة الذهبية الكاملة</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مركز نور اللياقة الرياضي - النظام الشامل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        textarea { resize: none; }
-        
-        /* خلفية ضبابية للعناصر */
-        .glass {
-            backdrop-filter: blur(12px);
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .btn { transition: 0.3s; }
-        .btn:hover { transform: scale(1.03); filter: brightness(1.1); }
-        
-        /* --- اللون الموحد لجميع العناصر --- */
-        .gold-theme {
-            background-color: #D9C563 !important;
-            color: black !important;
-            font-weight: bold !important;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        /* تنسيق النصوص داخل الحقول */
-        input.gold-theme { color: black !important; }
-        input.gold-theme::placeholder { color: rgba(0, 0, 0, 0.5) !important; }
-
-        /* تنسيق القوائم المنسدلة */
-        select.gold-theme option {
-            background-color: white !important;
-            color: black !important;
+        /* الألوان الاحترافية المعتمدة والتصميم الجديد */
+        :root {
+            --theme-yellow: #D9C563;
+            --theme-black: #000000;
+            --overlay-black: rgba(0, 0, 0, 0.85);
+            --glass-white: rgba(255, 255, 255, 0.92);
+            --danger-color: #ff4757;
+            --success-color: #2ed573;
+            --info-color: #1e90ff;
+            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
+            --bg-gradient: linear-gradient(135deg, var(--theme-yellow) 0%, #c5b253 100%);
+            --text-main: #000000;
+            --input-bg: rgba(0,0,0,0.04);
+            --input-text: #000;
+            --table-bg: #fff;
         }
 
-        /* إخفاء حدود الفوكس الافتراضية */
-        .gold-theme:focus {
-            outline: 2px solid rgba(0,0,0,0.2);
+        /* إعدادات الوضع الداكن */
+        body.dark-mode {
+            --theme-black: #f5f6fa;
+            --text-main: #f5f6fa;
+            --overlay-black: rgba(20, 20, 20, 0.95);
+            --glass-white: rgba(30, 30, 30, 0.95);
+            --bg-gradient: linear-gradient(135deg, #111 0%, #222 100%);
+            --input-bg: rgba(255,255,255,0.1);
+            --input-text: #fff;
+            --table-bg: #1e1e1e;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: var(--bg-gradient);
+            color: var(--text-main); margin: 0; padding: 0; overflow-x: hidden; min-height: 100vh;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* ----- شاشة تسجيل الدخول ----- */
+        #loginPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-gradient); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { 
+            background: var(--overlay-black); backdrop-filter: blur(15px); color: var(--theme-yellow); padding: 50px 40px; 
+            border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); width: 100%; max-width: 420px; text-align: center; 
+            border: 2px solid var(--theme-yellow); animation: fadeIn 0.8s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .login-box h2 { border-bottom: none; color: var(--theme-yellow); font-weight: 800; font-size: 28px; margin-bottom: 5px; }
+        .login-input { 
+            width: 100%; padding: 15px; margin: 12px 0; border: 1px solid rgba(217, 197, 99, 0.4); border-radius: 10px; 
+            background: rgba(255,255,255,0.95); color: #000; font-size: 16px; font-family: 'Cairo', sans-serif; font-weight: 600; transition: var(--transition);
+        }
+        .login-input:focus { outline: none; border-color: var(--theme-yellow); box-shadow: 0 0 15px rgba(217, 197, 99, 0.4); }
+        .btn-login { 
+            background-color: var(--theme-yellow); color: #000; border: none; padding: 15px; width: 100%; 
+            border-radius: 10px; font-size: 18px; font-weight: 800; cursor: pointer; margin-top: 20px; transition: var(--transition); 
+        }
+        .btn-login:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        #loginError { color: var(--danger-color); display: none; margin-top: 15px; font-weight: bold; background: rgba(255,71,87,0.1); padding: 10px; border-radius: 8px;}
+
+        /* ----- لوحة التحكم الرئيسية ----- */
+        #dashboardPage { display: none; }
+        header { 
+            background: var(--overlay-black); backdrop-filter: blur(10px); color: var(--theme-yellow); padding: 15px 30px; 
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--theme-yellow); box-shadow: var(--shadow-soft);
+        }
+        .header-title h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;}
+        .header-title p { margin: 5px 0 0 0; font-size: 15px; opacity: 0.9; color: #fff; }
+        .header-buttons { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
+        .btn-action { 
+            background: var(--theme-yellow); color: #000; border: none; padding: 10px 15px; border-radius: 8px; 
+            cursor: pointer; font-weight: 800; font-family: inherit; transition: var(--transition);
+        }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn-dark-mode { background: #333; color: #fff; }
+        body.dark-mode .btn-dark-mode { background: #f1c40f; color: #000; }
+        .btn-logout { background: var(--danger-color); color: white; }
+
+        #notificationBanner { background-color: var(--danger-color); color: white; text-align: center; padding: 12px; display: none; font-weight: 800; letter-spacing: 1px;}
+        
+        .container { 
+            max-width: 1300px; margin: 30px auto; background: var(--glass-white); backdrop-filter: blur(20px);
+            padding: 35px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid rgba(255,255,255,0.1); 
+        }
+        h2 { color: var(--text-main); border-bottom: 3px solid var(--theme-yellow); padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; font-weight: 800;}
+
+        /* ----- الإحصائيات والتذاكر ----- */
+        #adminDashboard { display: none; margin-bottom: 40px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-bottom: 20px;}
+        .stat-card { 
+            background: linear-gradient(145deg, var(--overlay-black), #111); color: white; padding: 15px; text-align: center; 
+            border-radius: 15px; border-bottom: 5px solid var(--theme-yellow); box-shadow: var(--shadow-soft); transition: var(--transition);
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+        .stat-card h4 { margin: 0 0 10px 0; color: #eee; font-size: 15px; border-bottom: 1px solid #444; padding-bottom: 8px; font-weight: 600;}
+        .stat-card .count-val { font-size: 24px; font-weight: 800; color: var(--theme-yellow); display: block; margin-bottom: 5px;}
+        .stat-card .money-val { display: block; font-size: 14px; color: var(--success-color); font-weight: 800; background: rgba(46, 213, 115, 0.1); padding: 5px; border-radius: 5px;}
+
+        .ticket-section { border-bottom: 5px solid var(--info-color); display: flex; flex-direction: column; justify-content: space-between;}
+        .ticket-controls { display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; margin-top: 10px;}
+        .ticket-btn { background: var(--theme-yellow); color: #000; border: none; font-size: 18px; width: 30px; height: 30px; border-radius: 5px; cursor: pointer; font-weight: 800; transition: var(--transition);}
+        .ticket-btn:hover { transform: scale(1.1); }
+        .ticket-input { width: 100%; text-align: center; padding: 8px; border-radius: 5px; border: none; font-weight: 800; font-family: inherit; margin-top: 5px; color: #000;}
+        .ticket-actions-row { display: flex; gap: 5px; width: 100%; margin-top: 5px; }
+        
+        .btn-ticket-save { background: var(--theme-yellow); color: #000; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: 800; font-family: inherit; flex: 1; transition: var(--transition);}
+        .btn-ticket-save:hover { background: #c5b253; transform: translateY(-2px); }
+        .btn-ticket-clear { background: rgba(255,255,255,0.1); color: var(--theme-yellow); border: 1px solid var(--theme-yellow); padding: 8px; border-radius: 5px; cursor: pointer; font-weight: 800; font-family: inherit; flex: 1; transition: var(--transition);}
+        .btn-ticket-clear:hover { background: var(--danger-color); color: white; border-color: var(--danger-color); transform: translateY(-2px); }
+
+        /* ----- النماذج ----- */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .form-grid label { font-weight: 800; display: block; margin-bottom: 8px; color: var(--text-main); font-size: 15px;}
+        input, select { 
+            width: 100%; padding: 12px 15px; border: 2px solid transparent; background-color: var(--input-bg);
+            color: var(--input-text);
+            border-bottom: 3px solid var(--theme-black); border-radius: 8px 8px 0 0; box-sizing: border-box; 
+            font-family: inherit; font-weight: 600; font-size: 15px; transition: var(--transition);
+        }
+        input:focus, select:focus { outline: none; background-color: var(--table-bg); border-bottom-color: var(--theme-yellow); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        button.btn-submit { 
+            background: linear-gradient(to left, var(--theme-yellow), #e6d478); color: #000; border: none; 
+            padding: 15px 30px; font-size: 18px; font-weight: 800; border-radius: 12px; cursor: pointer; width: 100%; 
+            transition: var(--transition); font-family: inherit; box-shadow: 0 5px 15px rgba(217, 197, 99, 0.4);
+        }
+        button.btn-submit:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(217, 197, 99, 0.6); }
+
+        /* ----- شريط التصفية (الفلاتر) والبحث ----- */
+        .search-container { margin-bottom: 15px; }
+        .search-input { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid var(--theme-yellow); font-size: 16px; background: var(--table-bg); color: var(--text-main); font-family: inherit; font-weight: bold; }
+        
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { 
+            background: var(--input-bg); border: 2px solid transparent; color: var(--text-main); padding: 8px 15px; border-radius: 30px; 
+            cursor: pointer; font-weight: 800; transition: var(--transition); font-family: inherit; opacity: 0.8;
+        }
+        .filter-btn:hover { opacity: 1; }
+        .filter-btn.active { background: var(--theme-black); color: var(--theme-yellow); opacity: 1; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        /* ----- الجداول ----- */
+        .table-responsive { overflow-x: auto; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); margin-bottom: 30px; background: var(--table-bg);}
+        table { width: 100%; border-collapse: collapse; font-size: 15px; background: var(--table-bg); color: var(--text-main); }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid rgba(128,128,128,0.2); vertical-align: middle; }
+        th { background-color: var(--overlay-black); color: var(--theme-yellow); font-weight: 800; white-space: nowrap; }
+        tr { transition: var(--transition); }
+        body:not(.dark-mode) tr:nth-child(even) { background-color: #fafafa; }
+        body.dark-mode tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+        tr:hover { background-color: rgba(217, 197, 99, 0.15) !important; }
+        .member-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 3px solid var(--theme-yellow); box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        button.btn-delete { background-color: var(--danger-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 800; font-family: inherit; transition: var(--transition);}
+        button.btn-delete:hover { background-color: #c0392b; transform: scale(1.05);}
+        
+        .expired-row { background-color: rgba(255, 71, 87, 0.05) !important; }
+        .expired-text { color: var(--danger-color); font-weight: 800; background: rgba(255,71,87,0.1); padding: 5px 10px; border-radius: 5px; display: inline-block;}
+        .expired-label { color: var(--danger-color); font-size: 12px; margin-right: 8px; font-weight: 900; background: rgba(255,0,0,0.1); padding: 2px 5px; border-radius: 4px; }
+
+        /* ----- لوحة التحكم الجانبية (Sidebar) ----- */
+        #adminSidebarPanel { 
+            position: fixed; top: 0; right: -450px; width: 420px; height: 100%; background: var(--overlay-black); backdrop-filter: blur(15px);
+            color: white; box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 10000; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px; overflow-y: auto; border-left: 5px solid var(--theme-yellow); 
+        }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(217, 197, 99, 0.3); padding-bottom: 15px; margin-bottom: 25px; }
+        .sidebar-header h3 { margin: 0; color: var(--theme-yellow); font-weight: 800; font-size: 22px;}
+        .btn-close-sidebar { background: rgba(255,255,255,0.1); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 16px; cursor: pointer; transition: var(--transition); }
+        .btn-close-sidebar:hover { background: var(--danger-color); transform: rotate(90deg);}
+        
+        .accordion { 
+            background-color: rgba(255,255,255,0.05); color: white; cursor: pointer; padding: 18px; width: 100%; text-align: right; border: 1px solid rgba(255,255,255,0.1); 
+            outline: none; transition: var(--transition); margin-bottom: 8px; border-radius: 10px; font-weight: 800; font-size: 16px; font-family: inherit;
+        }
+        .accordion.active, .accordion:hover { background-color: var(--theme-yellow); color: #000; border-color: var(--theme-yellow);}
+        .panel { padding: 20px; background-color: rgba(0,0,0,0.3); display: none; margin-bottom: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        
+        .roles-checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;}
+        .roles-checkboxes label { font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600;}
+
+        .mini-form input { margin-bottom: 15px; background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2); border-radius: 8px;}
+        .mini-form input:focus { background: rgba(255,255,255,0.2); color: white;}
+        .log-item { background: rgba(255,255,255,0.05); padding: 12px; border-right: 4px solid var(--theme-yellow); border-left: none; margin-bottom: 12px; font-size: 14px; border-radius: 5px; }
+        .log-time { color: var(--theme-yellow); font-size: 12px; display: block; margin-bottom: 5px; font-weight: bold;}
+        .user-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);}
+        .badge { background: var(--theme-yellow); color: #000; padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: 800; margin-left: 4px; display: inline-block; margin-bottom:4px;}
+
+        /* ----- النوافذ المنبثقة ----- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 20000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--glass-white); width: 90%; max-width: 650px; padding: 40px; border-radius: 20px; border: 4px solid var(--theme-yellow); max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: fadeIn 0.4s ease; color: var(--text-main);}
+        .modal-content h2 { text-align: center; color: var(--text-main); margin-top: 0;}
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 25px; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: var(--table-bg);}
+        .report-table th, .report-table td { border: 1px solid rgba(128,128,128,0.2); padding: 15px; text-align: center; font-weight: 600;}
+        .report-table th { background: var(--overlay-black); color: var(--theme-yellow); font-weight: 800;}
+        .total-row { font-size: 22px; font-weight: 800; background-color: rgba(217, 197, 99, 0.1); }
+        .btn-close-modal { background: var(--theme-black); color: var(--theme-yellow); border: none; padding: 15px 20px; cursor: pointer; border-radius: 10px; margin-top: 15px; width: 100%; font-size: 18px; font-weight: 800; font-family: inherit; transition: var(--transition);}
+        .btn-close-modal:hover { opacity: 0.9; transform: translateY(-2px);}
+        .btn-print-modal { background: var(--success-color); color: white; border: none; padding: 15px 20px; cursor: pointer; border-radius: 10px; margin-top: 25px; width: 100%; font-size: 18px; font-weight: 800; font-family: inherit; transition: var(--transition); display:flex; justify-content:center; gap:10px;}
+        .btn-print-modal:hover { background: #27ae60; transform: translateY(-2px);}
+
+        /* تخصيص السكرول بار */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--theme-yellow); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #c5b253; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #reportModal, #reportModal * { visibility: visible; }
+            #reportModal { position: absolute; left: 0; top: 0; width: 100%; background: white !important; backdrop-filter: none; color: black !important;}
+            .modal-content { border: none !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; margin:0; padding: 20px; background: white !important; color: black !important;}
+            .report-table th { background: #eee !important; color: black !important; }
+            .btn-close-modal, .btn-print-modal { display: none !important; }
         }
     </style>
 </head>
+<body>
 
-<body class="min-h-screen bg-cover bg-center" style="background-image: url('https://i.postimg.cc/FF6ydVNz/Chat-GPT-Image-8-abryl-2026-11-35-51-m.png');">
+    <div id="loginPage">
+        <div class="login-box">
+            <h2>🏋️‍♂️ تسجيل الدخول</h2>
+            <p style="margin-top: 0; font-size: 14px; font-weight: 600;">مركز نور اللياقة الرياضي</p>
+            <input type="email" id="loginEmail" class="login-input" placeholder="البريد الإلكتروني">
+            <input type="password" id="loginPass" class="login-input" placeholder="كلمة المرور">
+            <button class="btn-login" onclick="processLogin()">دخول للوحة التحكم</button>
+            <p id="loginError">البيانات غير صحيحة، حاول مجدداً!</p>
+        </div>
+    </div>
 
-<div class="w-full max-w-7xl mx-auto p-6">
-    <h1 class="text-4xl font-extrabold mb-8 text-center text-white drop-shadow-lg">
-        📋 قسم الجرد + الترقيات (النظام الذهبي الموحد)
-    </h1>
+    <div id="adminSidebarPanel">
+        <div class="sidebar-header">
+            <h3>⚙️ تحكم الإدارة المتقدم</h3>
+            <button class="btn-close-sidebar" onclick="toggleAdminSidebar()">✖</button>
+        </div>
+        
+        <button id="accAddUser" class="accordion" onclick="toggleAccordion(this)">➕ إضافة مستخدم وصلاحيات</button>
+        <div id="panelAddUser" class="panel mini-form">
+            <input type="text" id="newUserName" placeholder="اسم الموظف">
+            <input type="email" id="newUserEmail" placeholder="البريد الإلكتروني">
+            <input type="text" id="newUserPass" placeholder="كلمة المرور">
+            <div style="color:var(--theme-yellow); margin-bottom:10px; font-size:15px; font-weight:bold;">تحديد الرتب:</div>
+            <div class="roles-checkboxes">
+                <label><input type="checkbox" class="role-cb" value="admin"> مدير النظام</label>
+                <label><input type="checkbox" class="role-cb" value="accountant_1"> محاسب 1</label>
+                <label><input type="checkbox" class="role-cb" value="accountant_2"> محاسب 2</label>
+                <label><input type="checkbox" class="role-cb" value="coach_iron"> مدرب حديد</label>
+                <label><input type="checkbox" class="role-cb" value="coach_fitness"> مدرب لياقة</label>
+                <label><input type="checkbox" class="role-cb" value="coach_swim"> مدرب سباحة</label>
+                <label><input type="checkbox" class="role-cb" value="coach_boxing"> مدرب بوكسنق</label>
+            </div>
+            <button class="btn-action" style="width:100%; padding:15px;" onclick="addNewUser()">إضافة للنظام</button>
+        </div>
 
-    <div class="flex flex-col lg:flex-row gap-6">
-        <div class="w-full lg:w-80 glass p-5 rounded-2xl shadow-xl">
-            <h2 class="text-white mb-4 font-bold text-center text-lg border-b border-white/20 pb-2">
-                ⚙️ أدوات الترقيات
-            </h2>
+        <button id="accManageUsers" class="accordion" onclick="toggleAccordion(this)">👥 إدارة المستخدمين الحاليين</button>
+        <div id="panelManageUsers" class="panel">
+            <div id="usersListContainer"></div>
+        </div>
 
-            <div class="flex flex-col gap-3">
-                <label class="text-white text-sm">حدد المستوى المطلوب فحصه:</label>
-                <select id="levelSelect" class="w-full p-2.5 rounded-lg gold-theme cursor-pointer">
-                    <option value="trainee">متدرب ⟵ مستوى 1 (4 نقاط)</option>
-                    <option value="1">مستوى 1 ⟵ مستوى 2 (8 نقاط)</option>
-                    <option value="2">مستوى 2 ⟵ مستوى 3 (14 نقطة)</option>
-                    <option value="3">مستوى 3 ⟵ مستوى 4 (21 نقطة)</option>
-                    <option value="4">مستوى 4 ⟵ مستوى 5 (28 نقطة)</option>
-                </select>
-
-                <button onclick="filterQualified()" class="btn py-2.5 rounded-lg gold-theme shadow-md">
-                    🏆 المستحقين (حسب الشروط)
-                </button>
-
-                <hr class="border-white/10 my-1">
-
-                <input id="startCode" type="number" placeholder="🔢 بداية الكود" class="w-full p-2.5 rounded-lg gold-theme">
-                
-                <button onclick="filterNotQualified()" class="btn py-2.5 rounded-lg gold-theme">
-                    ⚡ توزيع ذكي (لغير المستحقين)
-                </button>
-
-                <button onclick="filterNotQualifiedOnly()" class="btn py-2.5 rounded-lg gold-theme">
-                    ❌ عرض غير المستحقين فقط
-                </button>
-
-                <button onclick="reassignCodes()" class="btn py-2.5 rounded-lg gold-theme">
-                    🔄 إعادة توزيع الأكواد
-                </button>
-
-                <button onclick="resetFields()" class="btn py-2.5 rounded-lg gold-theme mt-2 shadow-lg">
-                    🗑️ مسح الكل
-                </button>
+        <button id="accDatabase" class="accordion" onclick="toggleAccordion(this)">💾 إدارة قاعدة البيانات (حفظ/استرجاع)</button>
+        <div id="panelDatabase" class="panel">
+            <p style="font-size: 13px; color: #ccc;">لضمان عدم فقدان بياناتك، يمكنك حفظ نسخة من النظام بالكامل ورفعها لاحقاً.</p>
+            <button class="btn-action" style="width: 100%; margin-bottom: 10px; background: var(--info-color); color: white;" onclick="exportDatabase()">⬇️ تحميل نسخة احتياطية</button>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+                <label style="font-size: 13px; color: var(--theme-yellow); display: block; margin-bottom: 5px;">استيراد نسخة سابقة:</label>
+                <input type="file" id="importDbFile" accept=".json" style="width: 100%; font-size: 12px; margin-bottom: 10px;">
+                <button class="btn-action" style="width: 100%; background: var(--danger-color); color: white;" onclick="importDatabase()">⬆️ استرجاع البيانات</button>
             </div>
         </div>
 
-        <div class="flex-1">
-            <div class="flex flex-col md:flex-row gap-6">
-                <div class="w-full md:w-1/2 glass p-4 rounded-2xl shadow-xl">
-                    <h2 class="text-white text-center mb-3 font-bold">✍️ إدخال النص الأصلي</h2>
-                    <textarea id="inputText" class="w-full h-72 p-3 rounded-lg bg-black/60 text-white border border-white/10" placeholder="الصق السجلات هنا..."></textarea>
-                    <button onclick="analyzeText()" class="btn w-full mt-3 py-2.5 rounded-lg gold-theme">تحليل سريع</button>
-                </div>
+        <button id="accLogs" class="accordion" onclick="toggleAccordion(this)">📜 سجل النشاطات</button>
+        <div id="panelLogs" class="panel">
+            <div id="logsContainer"></div>
+        </div>
 
-                <div class="w-full md:w-1/2 glass p-4 rounded-2xl shadow-xl">
-                    <h2 class="text-white text-center mb-3 font-bold">🧹 النتيجة المستخرجة</h2>
-                    <textarea id="cleanedText" class="w-full h-72 p-3 rounded-lg bg-black/60 text-green-400 border border-white/10" readonly></textarea>
-                    <button onclick="copyText()" class="btn w-full mt-3 py-2.5 rounded-lg gold-theme">📋 نسخ النتيجة</button>
-                </div>
-            </div>
-
-            <div class="mt-8 glass p-5 rounded-2xl shadow-xl border border-yellow-400/30">
-                <h2 class="text-white text-center mb-3 font-bold text-lg">📋 نموذج إعلان الترقيات الجاهز</h2>
-                <button onclick="generatePromotionForm()" class="btn w-full mb-3 py-3 rounded-lg gold-theme shadow-xl">
-                    ⚡ توليد نموذج الترقيات للمستحقين
-                </button>
-                <textarea id="promotionBox" class="w-full h-64 p-3 rounded-lg bg-black/60 text-yellow-100 border border-white/10" readonly></textarea>
-                <button onclick="copyPromotion()" class="btn w-full mt-2 py-2.5 rounded-lg gold-theme">📋 نسخ النموذج للإرسال</button>
+        <button id="accLeaves" class="accordion" onclick="toggleAccordion(this)">✈️ إدارة الإجازات (تجميد الاشتراك)</button>
+        <div id="panelLeaves" class="panel mini-form">
+            <form id="addLeaveForm">
+                <input type="text" id="leaveName" required placeholder="اسم المشترك" style="margin-bottom:10px; color:black; background:white;">
+                <label style="color:var(--theme-yellow); font-size:13px; display:block; margin-bottom:5px;">تاريخ البدء:</label>
+                <input type="date" id="leaveStart" required style="margin-bottom:10px; color:black; background:white;">
+                <label style="color:var(--theme-yellow); font-size:13px; display:block; margin-bottom:5px;">تاريخ الانتهاء:</label>
+                <input type="date" id="leaveEnd" required style="margin-bottom:15px; color:black; background:white;">
+                <button type="submit" class="btn-action" style="width:100%; padding:10px; background:var(--info-color); color:white;">➕ تسجيل الإجازة</button>
+            </form>
+            <div style="margin-top: 20px; max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.9); border-radius: 8px; padding: 5px;">
+                <table id="leavesTable" style="width: 100%; color: #000; font-size: 13px; text-align: right; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--theme-black); color:var(--theme-black);">
+                            <th style="padding:8px 5px; background:transparent;">الاسم</th>
+                            <th style="padding:8px 5px; background:transparent;">البدء</th>
+                            <th style="padding:8px 5px; background:transparent;">الانتهاء</th>
+                            <th style="padding:8px 5px; background:transparent;">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <p id="counter" class="text-center text-yellow-400 font-bold mt-4 text-lg drop-shadow-md"></p>
-</div>
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>✏️ تعديل صلاحيات المستخدم</h2>
+            <div class="mini-form" style="background: none;">
+                <input type="hidden" id="editUserId">
+                <label style="font-weight: 800; color:var(--text-main);">اسم الموظف:</label>
+                <input type="text" id="editUserName">
+                <label style="font-weight: 800; color:var(--text-main); margin-top:10px;">كلمة المرور:</label>
+                <input type="text" id="editUserPass">
+                <label style="font-weight: 800; margin-top: 15px; display: block; color:var(--text-main);">الرتب الممنوحة:</label>
+                <div class="roles-checkboxes" style="background: var(--input-bg); border: 2px solid var(--theme-yellow);">
+                    <label><input type="checkbox" class="edit-role-cb" value="admin"> مدير النظام</label>
+                    <label><input type="checkbox" class="edit-role-cb" value="accountant_1"> محاسب 1</label>
+                    <label><input type="checkbox" class="edit-role-cb" value="accountant_2"> محاسب 2</label>
+                    <label><input type="checkbox" class="edit-role-cb" value="coach_iron"> مدرب حديد</label>
+                    <label><input type="checkbox" class="edit-role-cb" value="coach_fitness"> مدرب لياقة</label>
+                    <label><input type="checkbox" class="edit-role-cb" value="coach_swim"> مدرب سباحة</label>
+                    <label><input type="checkbox" class="edit-role-cb" value="coach_boxing"> مدرب بوكسنق</label>
+                </div>
+                <button class="btn-submit" onclick="saveEditedUser()" style="margin-top: 10px;">حفظ التعديلات</button>
+                <button class="btn-close-modal" style="background: var(--input-bg); color: var(--text-main); border:2px solid gray;" onclick="closeEditModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
 
-<script>
-// منطق البرمجة الخاص بالفرز والترقيات
-function getPromotionLevels() {
-    const level = document.getElementById("levelSelect").value;
-    const map = { "trainee": ["متدرب", "1"], "1": ["1", "2"], "2": ["2", "3"], "3": ["3", "4"], "4": ["4", "5"] };
-    return map[level] || ["?", "?"];
-}
+    <div id="reportModal" class="modal-overlay">
+        <div class="modal-content" id="printableReportArea">
+            <h2>📊 التقرير المالي الشامل للمركز</h2>
+            <p style="text-align: center; color: #666; font-size: 14px;" id="reportDateText"></p>
+            <table class="report-table">
+                <thead><tr><th>القسم / اللعبة</th><th>العدد</th><th>الدخل (ريال)</th></tr></thead>
+                <tbody id="reportTableBody"></tbody>
+                <tfoot>
+                    <tr class="total-row"><td colspan="2" style="text-align: right;">المجموع الكلي للدخل:</td><td style="color: var(--success-color);"><span id="reportTotalMoney">0</span> ريال</td></tr>
+                </tfoot>
+            </table>
+            <button class="btn-print-modal" onclick="window.print()">🖨️ طباعة / حفظ كملف PDF</button>
+            <button class="btn-close-modal" onclick="closeReport()">✖ إغلاق التقرير</button>
+        </div>
+    </div>
 
-function parseLines() {
-    const text = document.getElementById('inputText').value;
-    const currentLevel = document.getElementById("levelSelect").value;
-    const pointsConfig = { "trainee": 4, "1": 8, "2": 14, "3": 21, "4": 28 };
-    const requiredPoints = pointsConfig[currentLevel] || 0;
-    const seen = new Set();
+    <div id="dashboardPage">
+        <div id="notificationBanner">⚠️ يوجد <span id="expiredCount">0</span> اشتراكات منتهية! يرجى المراجعة.</div>
 
-    return text.split("\n").map(line => {
-        if (!line.trim() || line.includes("منصب شاغر")) return null;
-        const idMatch = line.match(/<@[^>]+>/);
-        const id = idMatch ? idMatch[0] : null;
-        if (!id || seen.has(id)) return null;
-        seen.add(id);
+        <header>
+            <div class="header-title">
+                <h1>مركز نور اللياقة الرياضي</h1>
+                <p>مرحباً بك، <span id="currentUserNameDisplay"></span> <span id="currentUserRoleDisplay" style="color:var(--theme-yellow); font-size:12px; margin-right:10px; font-weight:bold;"></span></p>
+            </div>
+            <div class="header-buttons">
+                <button class="btn-action btn-dark-mode" onclick="toggleDarkMode()">🌙 داكن / فاتح</button>
+                <button id="btnAdminPanel" class="btn-action" style="display:none;" onclick="toggleAdminSidebar()">⚙️ لوحة الإدارة</button>
+                <button class="btn-action btn-logout" onclick="processLogout()">تسجيل خروج</button>
+            </div>
+        </header>
 
-        const checks = (line.match(/✅/g) || []).length;
-        let points = 0;
-        const pMatch = line.match(/(?:النقاط\s*[:=]?\s*(\d+))|(?:(\d+)\s*(?:نقطة|نقاط|نقطه))/i);
-        if (pMatch) points = parseInt(pMatch[1] || pMatch[2]);
-        else {
-            const nums = line.replace(/<@[^>]+>/g, '').match(/\d+/g);
-            if (nums) points = parseInt(nums[nums.length - 1]);
+        <div class="container">
+            <div id="adminDashboard">
+                <h2>
+                    📊 الإحصائيات المباشرة
+                    <button id="btnGenerateReport" class="btn-action" style="font-size: 15px; padding: 8px 20px;" onclick="generateReport()">📄 إصدار تقرير كامل</button>
+                </h2>
+                <div class="stats-grid">
+                    <div class="stat-card"><h4>حديد</h4><span class="count-val" id="stat-iron-count">0</span><span class="money-val">💰 <span id="stat-iron-money">0</span></span></div>
+                    <div class="stat-card"><h4>لياقة</h4><span class="count-val" id="stat-fitness-count">0</span><span class="money-val">💰 <span id="stat-fitness-money">0</span></span></div>
+                    <div class="stat-card"><h4>سباحة</h4><span class="count-val" id="stat-swim-count">0</span><span class="money-val">💰 <span id="stat-swim-money">0</span></span></div>
+                    <div class="stat-card"><h4>تعليم سباحة 🏊‍♂️</h4><span class="count-val" id="stat-swimedu-count">0</span><span class="money-val">💰 <span id="stat-swimedu-money">0</span></span></div>
+                    <div class="stat-card"><h4>بوكسنق 🥊</h4><span class="count-val" id="stat-boxing-count">0</span><span class="money-val">💰 <span id="stat-boxing-money">0</span></span></div>
+                    <div class="stat-card"><h4>شامل</h4><span class="count-val" id="stat-all-count">0</span><span class="money-val">💰 <span id="stat-all-money">0</span></span></div>
+                    <div class="stat-card"><h4>شامل + ساونا</h4><span class="count-val" id="stat-sauna-count">0</span><span class="money-val">💰 <span id="stat-sauna-money">0</span></span></div>
+                    
+                    <div class="stat-card ticket-section" id="poolTicketManager">
+                        <h4 style="margin-bottom: 5px;">🎟️ تذاكر المسبح</h4>
+                        <div style="font-size:12px; margin-bottom:10px; color:#bbb;">
+                            مباع: <span id="totalTicketsCount" style="color:var(--theme-yellow); font-weight:bold;">0</span> <span id="poolTicketMoneyDisplay">| <span id="totalTicketsMoney" style="color:var(--success-color); font-weight:bold;">0</span> ريال</span>
+                        </div>
+                        <div class="ticket-controls">
+                            <button class="ticket-btn" onclick="adjustTicket(-1)">-</button>
+                            <span class="count-val" id="currentTicketCount" style="color:white; font-size:22px; margin:0;">1</span>
+                            <button class="ticket-btn" onclick="adjustTicket(1)">+</button>
+                            <input type="number" id="ticketPrice" class="ticket-input" placeholder="السعر" value="30">
+                        </div>
+                        <div class="ticket-actions-row">
+                            <button class="btn-ticket-save" onclick="savePoolTickets()">إضافة</button>
+                            <button class="btn-ticket-clear" onclick="clearPoolTickets()">مسح</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="addMemberSection">
+                <h2>إضافة مشترك جديد</h2>
+                <form id="addMemberForm">
+                    <div class="form-grid">
+                        <div><label>صورة المشترك (اختياري)</label><input type="file" id="memberImage" accept="image/*" style="padding: 9px 15px;"></div>
+                        <div><label>اسم المشترك</label><input type="text" id="memberName" required></div>
+                        <div><label>تاريخ الميلاد</label><input type="date" id="memberDOB" required></div>
+                        <div><label>رقم الهوية</label><input type="number" id="memberID" required></div>
+                        <div><label>رقم الجوال</label><input type="tel" id="memberPhone" required></div>
+                        <div><label>رقم الطوارئ (اختياري)</label><input type="tel" id="memberEmergency"></div>
+                        
+                        <div>
+                            <label>نوع الاشتراك</label>
+                            <select id="memberSubscription" required>
+                                <option value="" disabled selected>اختر النوع...</option>
+                                <option value="حديد">حديد</option>
+                                <option value="لياقة">لياقة</option>
+                                <option value="سباحة">سباحة</option>
+                                <option value="تعليم سباحة">تعليم سباحة 🏊‍♂️</option>
+                                <option value="بوكسنق">بوكسنق 🥊</option>
+                                <option value="شامل">شامل</option>
+                                <option value="شامل مع ساونا">شامل مع ساونا</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label>طريقة الدفع</label>
+                            <select id="memberPayment" required>
+                                <option value="كاش">💵 كاش</option>
+                                <option value="شبكة">💳 شبكة</option>
+                            </select>
+                        </div>
+                        <div><label>المبلغ المدفوع (ريال)</label><input type="number" id="memberPrice" required min="0" placeholder="مثال: 300"></div>
+                        <div><label>تاريخ البدء</label><input type="date" id="memberStart" required></div>
+                        <div><label>تاريخ الانتهاء</label><input type="date" id="memberEnd" required></div>
+                    </div>
+                    <button type="submit" class="btn-submit">➕ تسجيل وإضافة المشترك</button>
+                </form>
+            </div>
+
+            <h2 style="border-bottom: none; margin-bottom: 10px;">قائمة المشتركين الفعالة</h2>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث عن مشترك (بالاسم، أو رقم الهوية، أو الجوال)..." onkeyup="renderTable()">
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="setFilter('all', this)">الكل</button>
+                <button class="filter-btn" onclick="setFilter('حديد', this)">حديد</button>
+                <button class="filter-btn" onclick="setFilter('لياقة', this)">لياقة</button>
+                <button class="filter-btn" onclick="setFilter('سباحة', this)">سباحة</button>
+                <button class="filter-btn" onclick="setFilter('تعليم سباحة', this)">تعليم سباحة 🏊‍♂️</button>
+                <button class="filter-btn" onclick="setFilter('بوكسنق', this)">بوكسنق 🥊</button>
+                <button class="filter-btn" onclick="setFilter('شامل', this)">شامل</button>
+                <button class="filter-btn" onclick="setFilter('شامل مع ساونا', this)">شامل مع ساونا</button>
+            </div>
+
+            <div class="table-responsive">
+                <table id="membersTable">
+                    <thead>
+                        <tr id="tableHeaders">
+                            </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- إعدادات الوضع الداكن ---
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('gym_dark_mode', isDark);
+        }
+        if(localStorage.getItem('gym_dark_mode') === 'true') { document.body.classList.add('dark-mode'); }
+
+        // --- متغير التصفية ---
+        let currentFilter = 'all';
+        function setFilter(type, btnElement) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active'); renderTable(); 
         }
 
-        return { id, checks, points, qualified: (checks >= 2 && points >= requiredPoints) };
-    }).filter(x => x);
-}
+        // --- إدارة البيانات وتحديث الرتب ---
+        const RoleNames = {
+            'admin': 'مدير النظام', 'accountant_1': 'محاسب 1', 'accountant_2': 'محاسب 2',
+            'coach_iron': 'مدرب حديد', 'coach_fitness': 'مدرب لياقة', 'coach_swim': 'مدرب سباحة',
+            'coach_boxing': 'مدرب بوكسنق'
+        };
 
-function analyzeText(){
-    const data = parseLines();
-    document.getElementById("cleanedText").value = data.map(d => `${d.id} | الصح: ${d.checks} | النقاط: ${d.points}`).join("\n");
-}
+        let systemUsersRaw = JSON.parse(localStorage.getItem('gym_users')) || [
+            { id: 1, name: 'المدير ياسر', email: 'yasserbaker15@gmail.com', pass: 'yasser21', roles: ['admin'] }
+        ];
+        
+        let systemUsers = systemUsersRaw.map(u => { 
+            if (u.role && !u.roles) { u.roles = [u.role]; delete u.role; } 
+            if (u.roles) {
+                u.roles = u.roles.map(r => {
+                    if(r === 'technician') return 'accountant_1';
+                    if(r === 'accountant') return 'accountant_2';
+                    return r;
+                });
+            }
+            return u; 
+        });
+        
+        let membersData = JSON.parse(localStorage.getItem('gym_members')) || [];
+        let systemLogs = JSON.parse(localStorage.getItem('gym_logs')) || [];
+        let poolTicketsData = JSON.parse(localStorage.getItem('gym_pool_tickets')) || { totalCount: 0, totalMoney: 0 };
+        let leavesData = JSON.parse(localStorage.getItem('gym_leaves')) || [];
+        let loggedInUserRaw = JSON.parse(localStorage.getItem('gym_current_user')) || null;
+        
+        let loggedInUser = loggedInUserRaw;
+        if(loggedInUser) {
+            if(loggedInUser.role && !loggedInUser.roles) { loggedInUser.roles = [loggedInUser.role]; delete loggedInUser.role; }
+            if(loggedInUser.roles) {
+                loggedInUser.roles = loggedInUser.roles.map(r => {
+                    if(r === 'technician') return 'accountant_1';
+                    if(r === 'accountant') return 'accountant_2';
+                    return r;
+                });
+            }
+        }
+        
+        let tempTicketCount = 1;
 
-function filterQualified(){
-    const data = parseLines().filter(d => d.qualified);
-    document.getElementById("cleanedText").value = data.map(d => `${d.id}`).join("\n");
-    document.getElementById("counter").textContent = `✅ المستحقون: ${data.length}`;
-}
+        function saveAllData() {
+            localStorage.setItem('gym_users', JSON.stringify(systemUsers));
+            localStorage.setItem('gym_members', JSON.stringify(membersData));
+            localStorage.setItem('gym_logs', JSON.stringify(systemLogs));
+            localStorage.setItem('gym_pool_tickets', JSON.stringify(poolTicketsData));
+            localStorage.setItem('gym_leaves', JSON.stringify(leavesData));
+            localStorage.setItem('gym_current_user', JSON.stringify(loggedInUser));
+        }
 
-function filterNotQualifiedOnly(){
-    const data = parseLines().filter(d => !d.qualified);
-    document.getElementById("cleanedText").value = data.map(d => `${d.id}`).join("\n");
-}
+        // --- تصدير واستيراد JSON ---
+        function exportDatabase() {
+            const dataToExport = { users: systemUsers, members: membersData, logs: systemLogs, tickets: poolTicketsData, leaves: leavesData };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport));
+            const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "Gym_Database_Backup_" + new Date().toISOString().split('T')[0] + ".json");
+            document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+            addLog("قام بتصدير (تحميل) نسخة احتياطية");
+        }
 
-function filterNotQualified(){
-    let start = parseInt(document.getElementById("startCode").value);
-    if (isNaN(start)) { alert("ضع بداية الكود أولاً"); return; }
-    const data = parseLines().filter(d => !d.qualified);
-    document.getElementById("cleanedText").value = data.map((d, i) => `${d.id} G-${start + i}`).join("\n");
-}
+        function importDatabase() {
+            const file = document.getElementById('importDbFile').files[0];
+            if (!file) return alert("الرجاء اختيار ملف قاعدة البيانات أولاً!");
+            if(confirm("تحذير: استيراد قاعدة بيانات سيمسح البيانات الحالية. هل أنت متأكد؟")) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if(importedData.users && importedData.members) {
+                            systemUsers = importedData.users; membersData = importedData.members;
+                            systemLogs = importedData.logs || []; poolTicketsData = importedData.tickets || {totalCount:0, totalMoney:0}; leavesData = importedData.leaves || [];
+                            saveAllData(); alert("تم استرجاع قاعدة البيانات بنجاح! سيتم تحديث الصفحة."); window.location.reload();
+                        } else { alert("الملف غير صالح."); }
+                    } catch (err) { alert("حدث خطأ أثناء القراءة."); }
+                }; reader.readAsText(file);
+            }
+        }
 
-function reassignCodes(){
-    const data = parseLines().filter(d => d.qualified);
-    document.getElementById("cleanedText").value = data.map((d,i) => `${d.id} G-${400+i}`).join("\n");
-}
+        function addLog(action) {
+            const time = new Date().toLocaleString('ar-SA'); const userName = loggedInUser ? loggedInUser.name : 'النظام';
+            systemLogs.unshift({ time, action, user: userName }); if(systemLogs.length > 100) systemLogs.pop();
+            saveAllData(); renderLogsUI();
+        }
 
-function generatePromotionForm() {
-    const data = parseLines().filter(d => d.qualified);
-    const levels = getPromotionLevels();
-    if (data.length === 0) {
-        document.getElementById("promotionBox").value = "⚠️ لا يوجد مستحقين حالياً.";
-        return;
-    }
-    document.getElementById("promotionBox").value = `*** ▬▬▬ ﷽ ▬▬▬\n\`\`\`diff\n- الموضوع: ترقيات مستوى (${levels[0]}) .\n\`\`\`\n\`\`\`cs\n# بعد الاطلاع على نظام الترقيات واحصائيات السجلات\n\`\`\`\n\`\`\`\nأولا: ترقية التاليه أسمائهم من مستوى (${levels[0]}) الى مستوى (${levels[1]})\n\`\`\`\n${data.map(d => d.id).join("\n")}`;
-    document.getElementById("counter").textContent = `📋 تم التوليد لـ ${data.length}`;
-}
+        function toggleAccordion(btn) {
+            btn.classList.toggle("active"); let panel = btn.nextElementSibling;
+            if (panel.style.display === "block") { panel.style.display = "none"; } else { panel.style.display = "block"; }
+        }
 
-function copyText(){ navigator.clipboard.writeText(document.getElementById("cleanedText").value); alert("تم النسخ!"); }
-function copyPromotion(){ navigator.clipboard.writeText(document.getElementById("promotionBox").value); alert("تم نسخ النموذج!"); }
-function resetFields(){
-    document.getElementById("inputText").value = "";
-    document.getElementById("cleanedText").value = "";
-    document.getElementById("promotionBox").value = "";
-    document.getElementById("counter").textContent = "";
-    document.getElementById("startCode").value = "";
-}
-</script>
+        // --- نظام تسجيل الدخول ---
+        window.onload = () => { if (loggedInUser) activateSession(); };
+
+        function processLogin() {
+            const email = document.getElementById('loginEmail').value; const pass = document.getElementById('loginPass').value;
+            const user = systemUsers.find(u => u.email === email && u.pass === pass);
+            if (user) { loggedInUser = user; saveAllData(); addLog('تسجيل دخول ناجح للنظام'); activateSession(); } 
+            else { document.getElementById('loginError').style.display = 'block'; }
+        }
+
+        function processLogout() {
+            addLog('تسجيل خروج من النظام'); loggedInUser = null; saveAllData();
+            document.getElementById('dashboardPage').style.display = 'none'; document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('loginEmail').value = ''; document.getElementById('loginPass').value = ''; closeAdminSidebar();
+        }
+
+        function getRoleDisplayNames(rolesArray) { return rolesArray.map(r => RoleNames[r]).join(' + '); }
+
+        function activateSession() {
+            document.getElementById('loginPage').style.display = 'none'; document.getElementById('dashboardPage').style.display = 'block'; document.getElementById('loginError').style.display = 'none';
+            document.getElementById('currentUserNameDisplay').innerText = loggedInUser.name;
+            document.getElementById('currentUserRoleDisplay').innerText = `[ ${getRoleDisplayNames(loggedInUser.roles)} ]`;
+            applyRolePermissions(); renderTable(); renderLeavesTable();
+        }
+
+        function applyRolePermissions() {
+            const roles = loggedInUser.roles;
+            const adminDashboard = document.getElementById('adminDashboard'); const addMemberSection = document.getElementById('addMemberSection');
+            const btnAdminPanel = document.getElementById('btnAdminPanel'); const poolTicketManager = document.getElementById('poolTicketManager');
+            
+            const accAddUser = document.getElementById('accAddUser'); const panelAddUser = document.getElementById('panelAddUser');
+            const accManageUsers = document.getElementById('accManageUsers'); const panelManageUsers = document.getElementById('panelManageUsers');
+            const accLogs = document.getElementById('accLogs'); const panelLogs = document.getElementById('panelLogs');
+            const accLeaves = document.getElementById('accLeaves'); const panelLeaves = document.getElementById('panelLeaves');
+            const accDatabase = document.getElementById('accDatabase'); const panelDatabase = document.getElementById('panelDatabase');
+            
+            const btnGenerateReport = document.getElementById('btnGenerateReport');
+            const moneyDisplays = document.querySelectorAll('.money-val');
+            const poolTicketMoneyDisplay = document.getElementById('poolTicketMoneyDisplay');
+
+            // إخفاء النماذج والإدارة مبدئياً
+            adminDashboard.style.display = 'none'; addMemberSection.style.display = 'none'; btnAdminPanel.style.display = 'none'; poolTicketManager.style.display = 'none';
+            accAddUser.style.display = 'none'; accManageUsers.style.display = 'none'; accLogs.style.display = 'none'; accLeaves.style.display = 'none'; accDatabase.style.display = 'none';
+            
+            let isAdmin = roles.includes('admin');
+            let isAcc = roles.includes('accountant_1') || roles.includes('accountant_2');
+
+            if (isAdmin) {
+                // المدير يرى كل شيء
+                adminDashboard.style.display = 'block'; addMemberSection.style.display = 'block'; btnAdminPanel.style.display = 'block'; poolTicketManager.style.display = 'flex';
+                accAddUser.style.display = 'block'; accManageUsers.style.display = 'block'; accLogs.style.display = 'block'; accLeaves.style.display = 'block'; accDatabase.style.display = 'block';
+                if(btnGenerateReport) btnGenerateReport.style.display = 'inline-block';
+                moneyDisplays.forEach(el => el.style.display = 'block');
+                if(poolTicketMoneyDisplay) poolTicketMoneyDisplay.style.display = 'inline';
+                renderUsersUI(); renderLogsUI();
+            } else if (isAcc) {
+                // المحاسب يرى أعداد المشتركين ونموذج الإضافة، لكن بدون رؤية الأموال أو زر التقرير المالي
+                addMemberSection.style.display = 'block'; adminDashboard.style.display = 'block'; poolTicketManager.style.display = 'flex'; 
+                btnAdminPanel.style.display = 'block'; accLeaves.style.display = 'block'; 
+                if(btnGenerateReport) btnGenerateReport.style.display = 'none';
+                moneyDisplays.forEach(el => el.style.display = 'none');
+                if(poolTicketMoneyDisplay) poolTicketMoneyDisplay.style.display = 'none';
+            }
+
+            // --- التحكم الذكي في أزرار الفلترة للمدربين ---
+            // إخفاء الأزرار التي لا تخص قسم المدرب لتنظيف الواجهة
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                const text = btn.innerText.trim();
+                let showBtn = false;
+
+                if (isAdmin || isAcc) { 
+                    showBtn = true; // المدير والمحاسب يرون جميع الأزرار
+                } else {
+                    // المدرب يرى زر (الكل، شامل، شامل مع ساونا) وزر قسمه فقط
+                    if (text === 'الكل' || text === 'شامل' || text === 'شامل مع ساونا') showBtn = true;
+                    if (roles.includes('coach_iron') && text === 'حديد') showBtn = true;
+                    if (roles.includes('coach_fitness') && text === 'لياقة') showBtn = true;
+                    if (roles.includes('coach_swim') && (text === 'سباحة' || text.includes('تعليم سباحة'))) showBtn = true;
+                    if (roles.includes('coach_boxing') && text.includes('بوكسنق')) showBtn = true;
+                }
+                
+                btn.style.display = showBtn ? 'inline-block' : 'none';
+            });
+        }
+
+        // --- إدارة التذاكر ---
+        function adjustTicket(val) { tempTicketCount += val; if(tempTicketCount < 1) tempTicketCount = 1; document.getElementById('currentTicketCount').innerText = tempTicketCount; }
+        function savePoolTickets() {
+            const price = parseFloat(document.getElementById('ticketPrice').value) || 0; const revenue = tempTicketCount * price;
+            poolTicketsData.totalCount += tempTicketCount; poolTicketsData.totalMoney += revenue; addLog(`إضافة تذاكر مسبح: ${tempTicketCount} تذكرة بـ ${revenue} ريال`);
+            saveAllData(); tempTicketCount = 1; document.getElementById('currentTicketCount').innerText = tempTicketCount; renderTable(); alert('تم حفظ مبيعات التذاكر');
+        }
+        function clearPoolTickets() {
+            if(confirm("هل أنت متأكد من مسح جميع مبيعات التذاكر بالكامل؟ لا يمكن التراجع!")) {
+                poolTicketsData.totalCount = 0; poolTicketsData.totalMoney = 0; addLog("تم مسح مبيعات تذاكر المسبح"); saveAllData(); renderTable();
+            }
+        }
+
+        // --- إدارة الإجازات ---
+        document.getElementById('addLeaveForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const leave = { id: Date.now(), name: document.getElementById('leaveName').value, start: document.getElementById('leaveStart').value, end: document.getElementById('leaveEnd').value };
+            leavesData.push(leave); addLog(`تسجيل إجازة للمشترك: ${leave.name}`); saveAllData(); renderLeavesTable(); this.reset();
+        });
+        function renderLeavesTable() {
+            const tbody = document.querySelector('#leavesTable tbody'); tbody.innerHTML = '';
+            leavesData.forEach(leave => {
+                const deleteBtn = `<button class="btn-delete" style="padding:4px 8px; font-size:11px; border-radius:3px;" onclick="deleteLeave(${leave.id})">حذف</button>`;
+                tbody.innerHTML += `<tr style="border-bottom: 1px solid rgba(0,0,0,0.1);"><td style="padding:5px 0;">${leave.name}</td><td style="padding:5px 0;">${leave.start}</td><td style="padding:5px 0;">${leave.end}</td><td style="padding:5px 0;">${deleteBtn}</td></tr>`;
+            });
+        }
+        function deleteLeave(id) { if(confirm('تأكيد حذف هذه الإجازة؟')) { leavesData = leavesData.filter(l => l.id !== id); saveAllData(); renderLeavesTable(); } }
+
+        // --- لوحة الإدارة الجانبية والتعديل ---
+        let isSidebarOpen = false;
+        function toggleAdminSidebar() { const sidebar = document.getElementById('adminSidebarPanel'); if(isSidebarOpen) { closeAdminSidebar(); } else { sidebar.style.right = '0'; isSidebarOpen = true; } }
+        function closeAdminSidebar() { document.getElementById('adminSidebarPanel').style.right = '-450px'; isSidebarOpen = false; }
+
+        function addNewUser() {
+            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية إضافة مستخدمين أو منح رتب!');
+
+            const name = document.getElementById('newUserName').value, email = document.getElementById('newUserEmail').value, pass = document.getElementById('newUserPass').value;
+            const selectedRoles = Array.from(document.querySelectorAll('.role-cb:checked')).map(cb => cb.value);
+            if(!name || !email || !pass || selectedRoles.length === 0) return alert('يرجى تعبئة الحقول واختيار رتبة واحدة على الأقل');
+            
+            systemUsers.push({ id: Date.now(), name, email, pass, roles: selectedRoles }); addLog(`إضافة مستخدم: ${name}`);
+            saveAllData(); renderUsersUI(); document.getElementById('newUserName').value = ''; document.getElementById('newUserEmail').value = ''; document.getElementById('newUserPass').value = '';
+            document.querySelectorAll('.role-cb').forEach(cb => cb.checked = false);
+        }
+
+        function deleteUser(id) {
+            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة!');
+
+            const user = systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('عذراً، لا يمكن حذف المدير الأساسي!');
+            if(confirm('تأكيد حذف هذا المستخدم؟')) { systemUsers = systemUsers.filter(u => u.id !== id); addLog(`حذف المستخدم: ${user.name}`); saveAllData(); renderUsersUI(); }
+        }
+
+        function openEditModal(id) {
+            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية تعديل الرتب!');
+
+            const user = systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('لا يمكن التعديل على صلاحيات المدير الأساسي!');
+            document.getElementById('editUserId').value = user.id; document.getElementById('editUserName').value = user.name; document.getElementById('editUserPass').value = user.pass;
+            document.querySelectorAll('.edit-role-cb').forEach(cb => { cb.checked = user.roles.includes(cb.value); }); document.getElementById('editUserModal').style.display = 'flex';
+        }
+
+        function saveEditedUser() {
+            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة!');
+
+            const id = parseInt(document.getElementById('editUserId').value); const user = systemUsers.find(u => u.id === id);
+            const selectedRoles = Array.from(document.querySelectorAll('.edit-role-cb:checked')).map(cb => cb.value);
+            if(selectedRoles.length === 0) return alert('يجب اختيار رتبة واحدة على الأقل!');
+            
+            user.name = document.getElementById('editUserName').value; user.pass = document.getElementById('editUserPass').value; user.roles = selectedRoles;
+            addLog(`تعديل بيانات المستخدم: ${user.name}`); saveAllData(); renderUsersUI(); closeEditModal(); alert('تم حفظ التعديلات');
+            if(loggedInUser && loggedInUser.id === user.id) { loggedInUser = user; activateSession(); }
+        }
+        function closeEditModal() { document.getElementById('editUserModal').style.display = 'none'; }
+
+        function renderUsersUI() {
+            const container = document.getElementById('usersListContainer'); container.innerHTML = '';
+            systemUsers.forEach(u => {
+                let badges = u.roles.map(r => `<span class="badge">${RoleNames[r]}</span>`).join('');
+                let actionBtns = u.email !== 'yasserbaker15@gmail.com' ? `
+                    <div style="display:flex; gap:8px;"><button class="btn-action" style="background:var(--info-color); color:white; padding:6px 12px; font-size:13px;" onclick="openEditModal(${u.id})">تعديل</button><button class="btn-action" style="background:var(--danger-color); color:white; padding:6px 12px; font-size:13px;" onclick="deleteUser(${u.id})">حذف</button></div>` : `<span style="font-size:12px; color:var(--theme-yellow); font-weight:bold;">المالك الأساسي</span>`;
+                container.innerHTML += `<div class="user-item"><div><strong style="font-size:16px;">${u.name}</strong><br><div style="margin:5px 0;">${badges}</div><span style="font-size:12px; color:#aaa;">${u.email}</span></div> ${actionBtns}</div>`;
+            });
+        }
+        function renderLogsUI() { const container = document.getElementById('logsContainer'); container.innerHTML = ''; systemLogs.forEach(log => { container.innerHTML += `<div class="log-item"><span class="log-time">${log.time}</span><strong>${log.user}:</strong> ${log.action}</div>`; }); }
+
+        // --- معالجة المشتركين ورفع الصور باستخدام ImgBB ---
+        document.getElementById('addMemberForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('memberImage');
+            let imageSrc = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; // الصورة الافتراضية
+            const submitBtn = document.querySelector('#addMemberForm .btn-submit');
+            const originalBtnText = submitBtn.innerHTML;
+
+            if (fileInput.files && fileInput.files[0]) {
+                const imgbbKey = '0351444194825d29488bd1c566dfc6f1';
+
+                if (imgbbKey === 'YOUR_IMGBB_API_KEY') {
+                    alert('⚠️ تنبيه: يرجى وضع مفتاح ImgBB الخاص بك في الكود (السطر 689) لكي تعمل ميزة رفع الصور. سيتم الآن حفظ المشترك بالصورة الافتراضية.');
+                    saveMemberDataToSystem(imageSrc);
+                    return;
+                }
+
+                submitBtn.innerHTML = '⏳ جاري رفع الصورة... يرجى الانتظار';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+
+                try {
+                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        imageSrc = data.data.url; // نجاح الرفع
+                    } else {
+                        alert('حدث خطأ من سيرفر الصور أثناء الرفع، سيتم استخدام الصورة الافتراضية.');
+                    }
+                } catch (error) {
+                    console.error('ImgBB Error:', error);
+                    alert('فشل الاتصال بخادم الصور. يرجى التأكد من اتصال الإنترنت.');
+                } finally {
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }
+            }
+            
+            saveMemberDataToSystem(imageSrc);
+        });
+
+        function saveMemberDataToSystem(imgSrc) {
+            const name = document.getElementById('memberName').value;
+            const newMember = {
+                id_row: Date.now(), img: imgSrc, name: name, id_num: document.getElementById('memberID').value, phone: document.getElementById('memberPhone').value,
+                emergency: document.getElementById('memberEmergency').value || 'لا يوجد', subscription: document.getElementById('memberSubscription').value,
+                payment: document.getElementById('memberPayment').value, price: parseFloat(document.getElementById('memberPrice').value) || 0, start: document.getElementById('memberStart').value, end: document.getElementById('memberEnd').value
+            };
+            membersData.unshift(newMember); addLog(`تسجيل اشتراك جديد: ${name} (${newMember.subscription})`); saveAllData(); renderTable(); document.getElementById('addMemberForm').reset();
+        }
+
+        function renderTable() {
+            const thead = document.getElementById('tableHeaders'); const tbody = document.querySelector('#membersTable tbody'); tbody.innerHTML = '';
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const roles = loggedInUser.roles;
+            let isAdmin = roles.includes('admin'); 
+            let isAcc = roles.includes('accountant_1') || roles.includes('accountant_2');
+            let hasAdminOrFinanceView = isAdmin || isAcc;
+
+            // المحاسب يرى الجدول بدون عمود "المبلغ" والأزرار، المدير يرى كل شيء
+            if (isAdmin) { 
+                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>المبلغ</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th><th class="action-column">إجراءات</th>`;
+            } else if (isAcc) { 
+                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th>`; 
+            } else { 
+                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الاشتراك</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th>`; 
+            }
+
+            let allowedTypes = [];
+            // تحديد الصلاحيات للمدربين لعرض الأقسام المسموحة فقط
+            if(roles.includes('coach_iron')) allowedTypes.push('حديد', 'شامل', 'شامل مع ساونا');
+            if(roles.includes('coach_fitness')) allowedTypes.push('لياقة', 'شامل', 'شامل مع ساونا');
+            if(roles.includes('coach_swim')) allowedTypes.push('سباحة', 'تعليم سباحة', 'شامل', 'شامل مع ساونا');
+            if(roles.includes('coach_boxing')) allowedTypes.push('بوكسنق', 'شامل', 'شامل مع ساونا');
+            
+            let expiredCount = 0; const today = new Date(); today.setHours(0,0,0,0);
+            let stats = {
+                'حديد': { count: 0, money: 0 }, 'لياقة': { count: 0, money: 0 }, 'سباحة': { count: 0, money: 0 }, 'تعليم سباحة': {count:0, money:0},
+                'بوكسنق': { count: 0, money: 0 }, 'شامل': { count: 0, money: 0 }, 'شامل مع ساونا': { count: 0, money: 0 }
+            };
+
+            membersData.forEach(member => {
+                const endDate = new Date(member.end); const isExpired = endDate < today; if(isExpired) expiredCount++;
+                if(stats[member.subscription] !== undefined) { stats[member.subscription].count++; stats[member.subscription].money += Number(member.price) || 0; }
+                
+                let showRow = false;
+                if (hasAdminOrFinanceView) { showRow = true; if (member.subscription === 'تعليم سباحة' && !isAdmin && !isAcc && !roles.includes('coach_swim')) showRow = false; } 
+                else if (allowedTypes.includes(member.subscription)) { showRow = true; } // عرض صف المشترك للمدرب فقط إذا كان ضمن الأقسام المسموحة له
+
+                if (showRow && currentFilter !== 'all') { if (member.subscription !== currentFilter) { showRow = false; } }
+                if (showRow && searchVal !== '') {
+                    const nameMatch = member.name.toLowerCase().includes(searchVal); const idMatch = member.id_num && member.id_num.includes(searchVal); const phoneMatch = member.phone && member.phone.includes(searchVal);
+                    if (!nameMatch && !idMatch && !phoneMatch) { showRow = false; }
+                }
+
+                if (showRow) {
+                    const row = document.createElement('tr'); if(isExpired) row.classList.add('expired-row');
+                    const expiredLabel = isExpired ? `<span class="expired-label">(انتهى الاشتراك)</span>` : '';
+                    
+                    if (isAdmin) {
+                        const deleteBtnHtml = `<button class="btn-delete" onclick="deleteMember(${member.id_row}, '${member.name}')">حذف</button>`;
+                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td>${member.id_num}</td><td dir="ltr" style="text-align:right;">${member.phone}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.payment}</td><td style="color:var(--success-color); font-weight:900;">${member.price}</td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td><td class="action-column">${deleteBtnHtml}</td>`;
+                    } else if (isAcc) {
+                        // إخفاء عمود المبلغ والمبلغ المدفوع للمحاسبين
+                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td>${member.id_num}</td><td dir="ltr" style="text-align:right;">${member.phone}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.payment}</td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td>`;
+                    } else {
+                        // عرض مبسط للمدربين
+                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td>`;
+                    }
+                    tbody.appendChild(row);
+                }
+            });
+
+            if(hasAdminOrFinanceView) {
+                ['iron', 'fitness', 'swim', 'swimedu', 'boxing', 'all', 'sauna'].forEach(type => {
+                    let mapKey = type==='iron'?'حديد':type==='fitness'?'لياقة':type==='swim'?'سباحة':type==='swimedu'?'تعليم سباحة':type==='boxing'?'بوكسنق':type==='all'?'شامل':'شامل مع ساونا';
+                    document.getElementById(`stat-${type}-count`).innerText = stats[mapKey].count; document.getElementById(`stat-${type}-money`).innerText = stats[mapKey].money;
+                });
+                document.getElementById('totalTicketsCount').innerText = poolTicketsData.totalCount; document.getElementById('totalTicketsMoney').innerText = poolTicketsData.totalMoney;
+            }
+
+            const banner = document.getElementById('notificationBanner');
+            if (expiredCount > 0 && (isAdmin || isAcc)) { banner.style.display = 'block'; document.getElementById('expiredCount').innerText = expiredCount;
+            } else { banner.style.display = 'none'; }
+        }
+
+        function deleteMember(id, name) { if(loggedInUser.roles.includes('admin') && confirm('تأكيد الحذف النهائي للمشترك؟')) { membersData = membersData.filter(m => m.id_row !== id); addLog(`تم حذف اشتراك: ${name}`); saveAllData(); renderTable(); } }
+
+        // --- التقرير الشامل ---
+        function generateReport() {
+            const tbody = document.getElementById('reportTableBody'); tbody.innerHTML = '';
+            document.getElementById('reportDateText').innerText = `تاريخ التقرير: ${new Date().toLocaleString('ar-SA')}`;
+            let stats = {
+                'الحديد': { count: 0, money: 0 }, 'اللياقة': { count: 0, money: 0 }, 'السباحة': { count: 0, money: 0 }, 'تعليم السباحة': {count:0, money:0},
+                'البوكسنق 🥊': { count: 0, money: 0 }, 'الشامل': { count: 0, money: 0 }, 'شامل مع ساونا': { count: 0, money: 0 }
+            };
+            membersData.forEach(m => {
+                let key = m.subscription === 'حديد' ? 'الحديد' : m.subscription === 'لياقة' ? 'اللياقة' : m.subscription === 'سباحة' ? 'السباحة' : m.subscription === 'تعليم سباحة' ? 'تعليم السباحة' : m.subscription === 'بوكسنق' ? 'البوكسنق 🥊' : m.subscription === 'شامل' ? 'الشامل' : 'شامل مع ساونا';
+                stats[key].count++; stats[key].money += Number(m.price) || 0;
+            });
+            let totalMoney = 0;
+            for (const [sport, data] of Object.entries(stats)) { totalMoney += data.money; tbody.innerHTML += `<tr><td>${sport}</td><td>${data.count}</td><td style="color:var(--success-color); font-weight:800; font-size:16px;">${data.money}</td></tr>`; }
+            totalMoney += poolTicketsData.totalMoney;
+            tbody.innerHTML += `<tr style="background:rgba(0,0,0,0.02);"><td>تذاكر المسبح اليومية 🎟️</td><td>${poolTicketsData.totalCount}</td><td style="color:var(--success-color); font-weight:800; font-size:16px;">${poolTicketsData.totalMoney}</td></tr>`;
+            document.getElementById('reportTotalMoney').innerText = totalMoney; document.getElementById('reportModal').style.display = 'flex';
+        }
+        function closeReport() { document.getElementById('reportModal').style.display = 'none'; }
+    </script>
 </body>
 </html>
