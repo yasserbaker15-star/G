@@ -457,6 +457,45 @@
         </div>
     </div>
 
+    <div id="editMemberModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>✏️ تعديل بيانات المشترك</h2>
+            <div class="form-grid">
+                <input type="hidden" id="editMemberId">
+                <div><label>اسم المشترك</label><input type="text" id="editMemberName" required></div>
+                <div><label>رقم الهوية</label><input type="number" id="editMemberID" required></div>
+                <div><label>رقم الجوال</label><input type="tel" id="editMemberPhone" required></div>
+                
+                <div>
+                    <label>نوع الاشتراك</label>
+                    <select id="editMemberSubscription" required>
+                        <option value="حديد">حديد</option>
+                        <option value="لياقة">لياقة</option>
+                        <option value="سباحة">سباحة</option>
+                        <option value="تعليم سباحة">تعليم سباحة 🏊‍♂️</option>
+                        <option value="بوكسنق">بوكسنق 🥊</option>
+                        <option value="شامل">شامل</option>
+                        <option value="شامل مع ساونا">شامل مع ساونا</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>طريقة الدفع</label>
+                    <select id="editMemberPayment" required>
+                        <option value="كاش">💵 كاش</option>
+                        <option value="شبكة">💳 شبكة</option>
+                    </select>
+                </div>
+                <div><label>المبلغ المدفوع (ريال)</label><input type="number" id="editMemberPrice" required min="0"></div>
+                <div><label>رقم السند</label><input type="text" id="editMemberReceipt" required></div>
+                <div><label>تاريخ البدء</label><input type="date" id="editMemberStart" required></div>
+                <div><label>تاريخ الانتهاء</label><input type="date" id="editMemberEnd" required></div>
+            </div>
+            <button class="btn-submit" onclick="saveEditedMember()" style="margin-top: 15px;">💾 حفظ تعديلات المشترك</button>
+            <button class="btn-close-modal" style="background: var(--input-bg); color: var(--text-main); border:2px solid gray;" onclick="closeEditMemberModal()">إلغاء</button>
+        </div>
+    </div>
+
     <div id="reportModal" class="modal-overlay">
         <div class="modal-content" id="printableReportArea">
             <h2>📊 التقرير المالي الشامل للمركز</h2>
@@ -558,6 +597,7 @@
                         <div><label>المبلغ المدفوع (ريال)</label><input type="number" id="memberPrice" required min="0" placeholder="مثال: 300"></div>
                         <div><label>تاريخ البدء</label><input type="date" id="memberStart" required></div>
                         <div><label>تاريخ الانتهاء</label><input type="date" id="memberEnd" required></div>
+                        <div><label>رقم السند</label><input type="text" id="memberReceipt" required placeholder="مثال: 10023"></div>
                     </div>
                     <button type="submit" class="btn-submit">➕ تسجيل وإضافة المشترك</button>
                 </form>
@@ -611,10 +651,8 @@
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
 
-        // المرجع الرئيسي لقاعدة البيانات في Firestore
         const dbDocRef = doc(db, "gym_system", "main_data");
 
-        // --- المتغيرات الرئيسية ---
         let currentFilter = 'all';
         let tempTicketCount = 1;
         let isSidebarOpen = false;
@@ -624,7 +662,6 @@
         window.systemLogs = [];
         window.poolTicketsData = { totalCount: 0, totalMoney: 0 };
         window.leavesData = [];
-        // تبقى جلسة المستخدم مسجلة في التخزين المحلي لكي لا يخرج عند التحديث
         window.loggedInUser = JSON.parse(localStorage.getItem('gym_current_user')) || null;
 
         const defaultSystemUsers = [
@@ -640,14 +677,12 @@
             'coach_boxing': 'مدرب بوكسنق'
         };
 
-        // إعدادات الوضع الداكن
         window.toggleDarkMode = function() {
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('gym_dark_mode', document.body.classList.contains('dark-mode'));
         }
         if(localStorage.getItem('gym_dark_mode') === 'true') { document.body.classList.add('dark-mode'); }
 
-        // --- الاستماع اللحظي لقاعدة البيانات (السحر هنا) ---
         onSnapshot(dbDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -657,25 +692,20 @@
                 window.poolTicketsData = data.tickets || { totalCount: 0, totalMoney: 0 };
                 window.leavesData = data.leaves || [];
                 
-                // تحديث الشاشة فوراً عند وصول بيانات جديدة من المحاسب أو المدير
                 if (window.loggedInUser) {
                     window.activateSession(); 
                 } else {
                     window.activatePublicSession();
                 }
             } else {
-                // إذا كانت قاعدة البيانات فارغة (أول مرة تشغل فيها الموقع)، نملأها بالبيانات الافتراضية
                 window.systemUsers = defaultSystemUsers;
                 window.saveAllData();
             }
         });
 
-        // --- دالة الحفظ السحابي ---
         window.saveAllData = async function() {
-            // حفظ جلسة الدخول في المتصفح
             localStorage.setItem('gym_current_user', JSON.stringify(window.loggedInUser));
             try {
-                // رفع البيانات بالكامل إلى Firestore
                 await setDoc(dbDocRef, {
                     users: window.systemUsers,
                     members: window.membersData,
@@ -726,7 +756,7 @@
             const time = new Date().toLocaleString('ar-SA');
             const userName = window.loggedInUser ? window.loggedInUser.name : 'النظام';
             window.systemLogs.unshift({ time, action, user: userName }); if(window.systemLogs.length > 100) window.systemLogs.pop();
-            window.saveAllData(); // سينعكس فوراً عبر onSnapshot
+            window.saveAllData(); 
         }
 
         window.toggleAccordion = function(btn) {
@@ -876,6 +906,7 @@
             if(confirm('تأكيد حذف هذا المستخدم؟')) { window.systemUsers = window.systemUsers.filter(u => u.id !== id); window.addLog(`حذف المستخدم: ${user.name}`); window.saveAllData(); }
         }
 
+        // --- دوال تعديل المستخدمين (الموظفين) ---
         window.openEditModal = function(id) {
             if(!window.loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية تعديل الرتب!');
             const user = window.systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('لا يمكن التعديل على صلاحيات المدير الأساسي!');
@@ -893,6 +924,49 @@
             if(window.loggedInUser && window.loggedInUser.id === user.id) { window.loggedInUser = user; window.activateSession(); }
         }
         window.closeEditModal = function() { document.getElementById('editUserModal').style.display = 'none'; }
+
+        // --- دوال تعديل المشتركين الجدد ---
+        window.openEditMemberModal = function(id) {
+            const member = window.membersData.find(m => m.id_row === id);
+            if(!member) return;
+            document.getElementById('editMemberId').value = member.id_row;
+            document.getElementById('editMemberName').value = member.name;
+            document.getElementById('editMemberID').value = member.id_num;
+            document.getElementById('editMemberPhone').value = member.phone;
+            document.getElementById('editMemberSubscription').value = member.subscription;
+            document.getElementById('editMemberPayment').value = member.payment || 'كاش';
+            document.getElementById('editMemberPrice').value = member.price;
+            document.getElementById('editMemberReceipt').value = member.receipt || '';
+            document.getElementById('editMemberStart').value = member.start;
+            document.getElementById('editMemberEnd').value = member.end;
+            document.getElementById('editMemberModal').style.display = 'flex';
+        };
+
+        window.saveEditedMember = function() {
+            const id = parseInt(document.getElementById('editMemberId').value);
+            const memberIndex = window.membersData.findIndex(m => m.id_row === id);
+            
+            if(memberIndex > -1) {
+                window.membersData[memberIndex].name = document.getElementById('editMemberName').value;
+                window.membersData[memberIndex].id_num = document.getElementById('editMemberID').value;
+                window.membersData[memberIndex].phone = document.getElementById('editMemberPhone').value;
+                window.membersData[memberIndex].subscription = document.getElementById('editMemberSubscription').value;
+                window.membersData[memberIndex].payment = document.getElementById('editMemberPayment').value;
+                window.membersData[memberIndex].price = parseFloat(document.getElementById('editMemberPrice').value) || 0;
+                window.membersData[memberIndex].receipt = document.getElementById('editMemberReceipt').value || 'لا يوجد';
+                window.membersData[memberIndex].start = document.getElementById('editMemberStart').value;
+                window.membersData[memberIndex].end = document.getElementById('editMemberEnd').value;
+                
+                window.addLog(`تعديل بيانات المشترك: ${window.membersData[memberIndex].name}`);
+                window.saveAllData();
+                window.closeEditMemberModal();
+                alert('تم حفظ تعديلات المشترك بنجاح!');
+            }
+        };
+
+        window.closeEditMemberModal = function() {
+            document.getElementById('editMemberModal').style.display = 'none';
+        };
 
         window.renderUsersUI = function() {
             const container = document.getElementById('usersListContainer'); container.innerHTML = '';
@@ -931,10 +1005,11 @@
             const newMember = {
                 id_row: Date.now(), img: imgSrc, name: name, id_num: document.getElementById('memberID').value, phone: document.getElementById('memberPhone').value,
                 emergency: document.getElementById('memberEmergency').value || 'لا يوجد', subscription: document.getElementById('memberSubscription').value,
-                payment: document.getElementById('memberPayment').value, price: parseFloat(document.getElementById('memberPrice').value) || 0, start: document.getElementById('memberStart').value, end: document.getElementById('memberEnd').value
+                payment: document.getElementById('memberPayment').value, price: parseFloat(document.getElementById('memberPrice').value) || 0, start: document.getElementById('memberStart').value, end: document.getElementById('memberEnd').value,
+                receipt: document.getElementById('memberReceipt').value || 'لا يوجد'
             };
             window.membersData.unshift(newMember);
-            window.addLog(`تسجيل اشتراك جديد: ${name} (${newMember.subscription})`); window.saveAllData(); document.getElementById('addMemberForm').reset();
+            window.addLog(`تسجيل اشتراك جديد: ${name} (${newMember.subscription}) | رقم السند: ${newMember.receipt}`); window.saveAllData(); document.getElementById('addMemberForm').reset();
         }
 
         window.renderTable = function() {
@@ -948,12 +1023,13 @@
             let isAcc = isLoggedIn && (roles.includes('accountant_1') || roles.includes('accountant_2'));
             let hasAdminOrFinanceView = isAdmin || isAcc;
 
+            // تحديث عناوين الجداول لتشمل السند والإجراءات
             if (!isLoggedIn) {
                 thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الاشتراك</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th>`;
             } else if (isAdmin) { 
-                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>المبلغ</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th><th class="action-column">إجراءات</th>`;
+                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>المبلغ</th><th>رقم السند</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th><th class="action-column">إجراءات</th>`;
             } else if (isAcc) { 
-                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th>`;
+                thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>المبلغ</th><th>رقم السند</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th><th class="action-column">إجراءات</th>`;
             } else { 
                 thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الاشتراك</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th>`;
             }
@@ -986,21 +1062,26 @@
                     const nameMatch = member.name.toLowerCase().includes(searchVal); 
                     const idMatch = member.id_num && member.id_num.includes(searchVal);
                     const phoneMatch = member.phone && member.phone.includes(searchVal);
-                    if (!nameMatch && (!isLoggedIn || !idMatch) && (!isLoggedIn || !phoneMatch)) { showRow = false; }
+                    // إضافة البحث برقم السند أيضاً لتسهيل الوصول
+                    const receiptMatch = member.receipt && member.receipt.includes(searchVal);
+                    
+                    if (!nameMatch && (!isLoggedIn || !idMatch) && (!isLoggedIn || !phoneMatch) && (!isLoggedIn || !receiptMatch)) { showRow = false; }
                 }
 
                 if (showRow) {
                     const row = document.createElement('tr');
                     if(isExpired) row.classList.add('expired-row');
                     const expiredLabel = isExpired ? `<span class="expired-label">(انتهى الاشتراك)</span>` : '';
-                    
+                    const receiptText = member.receipt || 'لا يوجد';
+                    const editBtnHtml = `<button class="btn-action" style="background:var(--info-color); color:white; padding:6px 12px; margin-left:5px;" onclick="openEditMemberModal(${member.id_row})">تعديل</button>`;
+                    const deleteBtnHtml = `<button class="btn-delete" onclick="deleteMember(${member.id_row}, '${member.name}')">حذف</button>`;
+
                     if (!isLoggedIn) {
                         row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td>`;
                     } else if (isAdmin) {
-                        const deleteBtnHtml = `<button class="btn-delete" onclick="deleteMember(${member.id_row}, '${member.name}')">حذف</button>`;
-                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td>${member.id_num}</td><td dir="ltr" style="text-align:right;">${member.phone}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.payment}</td><td style="color:var(--success-color); font-weight:900;">${member.price}</td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td><td class="action-column">${deleteBtnHtml}</td>`;
+                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td>${member.id_num}</td><td dir="ltr" style="text-align:right;">${member.phone}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.payment}</td><td style="color:var(--success-color); font-weight:900;">${member.price}</td><td><span style="font-weight:bold; color:var(--info-color);">${receiptText}</span></td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td><td class="action-column" style="white-space: nowrap;">${editBtnHtml}${deleteBtnHtml}</td>`;
                     } else if (isAcc) {
-                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td>${member.id_num}</td><td dir="ltr" style="text-align:right;">${member.phone}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.payment}</td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td>`;
+                        row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td>${member.id_num}</td><td dir="ltr" style="text-align:right;">${member.phone}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.payment}</td><td style="color:var(--success-color); font-weight:900;">${member.price}</td><td><span style="font-weight:bold; color:var(--info-color);">${receiptText}</span></td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td><td class="action-column" style="white-space: nowrap;">${editBtnHtml}</td>`;
                     } else {
                         row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name} <br> ${expiredLabel}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td>`;
                     }
