@@ -591,117 +591,154 @@
         </div>
     </div>
 
-    <script>
-        // --- إعدادات الوضع الداكن ---
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('gym_dark_mode', isDark);
-        }
-        if(localStorage.getItem('gym_dark_mode') === 'true') { document.body.classList.add('dark-mode'); }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvLBiowOIIazPEXHU0tKtO8BRBaZoeAPg",
+            authDomain: "ksa-arab.firebaseapp.com",
+            databaseURL: "https://ksa-arab-default-rtdb.firebaseio.com",
+            projectId: "ksa-arab",
+            storageBucket: "ksa-arab.firebasestorage.app",
+            messagingSenderId: "706218412262",
+            appId: "1:706218412262:web:9045734ddf3a5ad0159327",
+            measurementId: "G-P6MH67349P"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // المرجع الرئيسي لقاعدة البيانات في Firestore
+        const dbDocRef = doc(db, "gym_system", "main_data");
+
+        // --- المتغيرات الرئيسية ---
         let currentFilter = 'all';
-        function setFilter(type, btnElement) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active'); renderTable(); 
-        }
+        let tempTicketCount = 1;
+        let isSidebarOpen = false;
 
-        // --- تهيئة المستخدمين الأساسيين الجدد (المدراء والمحاسبين) ---
+        window.systemUsers = [];
+        window.membersData = [];
+        window.systemLogs = [];
+        window.poolTicketsData = { totalCount: 0, totalMoney: 0 };
+        window.leavesData = [];
+        // تبقى جلسة المستخدم مسجلة في التخزين المحلي لكي لا يخرج عند التحديث
+        window.loggedInUser = JSON.parse(localStorage.getItem('gym_current_user')) || null;
+
         const defaultSystemUsers = [
             { id: 1, name: 'المدير الأول', email: 'yasserbaker15@gmail.com', pass: 'yasser21', roles: ['admin'] },
             { id: 2, name: 'المدير الثاني', email: 'moshary22211@gmail.com', pass: '123123', roles: ['admin'] },
             { id: 3, name: 'المحاسب الأول', email: 'A', pass: '123123', roles: ['accountant_1'] },
             { id: 4, name: 'المحاسب الثاني', email: 'B', pass: '123123', roles: ['accountant_2'] }
         ];
-        
-        let systemUsersRaw = JSON.parse(localStorage.getItem('gym_users'));
-        // إجبار التحديث لإضافة الحسابات الجديدة إذا لم تكن موجودة في المتصفح مسبقاً
-        if (!systemUsersRaw || systemUsersRaw.length < 4 || !systemUsersRaw.find(u => u.email === 'moshary22211@gmail.com')) {
-            systemUsersRaw = defaultSystemUsers;
-            localStorage.setItem('gym_users', JSON.stringify(systemUsersRaw));
-        }
 
         const RoleNames = {
             'admin': 'مدير النظام', 'accountant_1': 'محاسب 1', 'accountant_2': 'محاسب 2',
             'coach_iron': 'مدرب حديد', 'coach_fitness': 'مدرب لياقة', 'coach_swim': 'مدرب سباحة',
             'coach_boxing': 'مدرب بوكسنق'
         };
-        
-        let systemUsers = systemUsersRaw.map(u => { 
-            if (u.role && !u.roles) { u.roles = [u.role]; delete u.role; } 
-            return u; 
+
+        // إعدادات الوضع الداكن
+        window.toggleDarkMode = function() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('gym_dark_mode', document.body.classList.contains('dark-mode'));
+        }
+        if(localStorage.getItem('gym_dark_mode') === 'true') { document.body.classList.add('dark-mode'); }
+
+        // --- الاستماع اللحظي لقاعدة البيانات (السحر هنا) ---
+        onSnapshot(dbDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.systemUsers = data.users || defaultSystemUsers;
+                window.membersData = data.members || [];
+                window.systemLogs = data.logs || [];
+                window.poolTicketsData = data.tickets || { totalCount: 0, totalMoney: 0 };
+                window.leavesData = data.leaves || [];
+                
+                // تحديث الشاشة فوراً عند وصول بيانات جديدة من المحاسب أو المدير
+                if (window.loggedInUser) {
+                    window.activateSession(); 
+                } else {
+                    window.activatePublicSession();
+                }
+            } else {
+                // إذا كانت قاعدة البيانات فارغة (أول مرة تشغل فيها الموقع)، نملأها بالبيانات الافتراضية
+                window.systemUsers = defaultSystemUsers;
+                window.saveAllData();
+            }
         });
-        
-        let membersData = JSON.parse(localStorage.getItem('gym_members')) || [];
-        let systemLogs = JSON.parse(localStorage.getItem('gym_logs')) || [];
-        let poolTicketsData = JSON.parse(localStorage.getItem('gym_pool_tickets')) || { totalCount: 0, totalMoney: 0 };
-        let leavesData = JSON.parse(localStorage.getItem('gym_leaves')) || [];
-        let loggedInUser = JSON.parse(localStorage.getItem('gym_current_user')) || null;
-        
-        let tempTicketCount = 1;
-        function saveAllData() {
-            localStorage.setItem('gym_users', JSON.stringify(systemUsers));
-            localStorage.setItem('gym_members', JSON.stringify(membersData));
-            localStorage.setItem('gym_logs', JSON.stringify(systemLogs));
-            localStorage.setItem('gym_pool_tickets', JSON.stringify(poolTicketsData));
-            localStorage.setItem('gym_leaves', JSON.stringify(leavesData));
-            localStorage.setItem('gym_current_user', JSON.stringify(loggedInUser));
+
+        // --- دالة الحفظ السحابي ---
+        window.saveAllData = async function() {
+            // حفظ جلسة الدخول في المتصفح
+            localStorage.setItem('gym_current_user', JSON.stringify(window.loggedInUser));
+            try {
+                // رفع البيانات بالكامل إلى Firestore
+                await setDoc(dbDocRef, {
+                    users: window.systemUsers,
+                    members: window.membersData,
+                    logs: window.systemLogs,
+                    tickets: window.poolTicketsData,
+                    leaves: window.leavesData
+                });
+            } catch (e) {
+                console.error("خطأ في الاتصال بقاعدة البيانات: ", e);
+                alert("لم يتم الحفظ في السيرفر! تأكد من اتصال الإنترنت.");
+            }
         }
 
-        // --- تصدير واستيراد JSON ---
-        function exportDatabase() {
-            const dataToExport = { users: systemUsers, members: membersData, logs: systemLogs, tickets: poolTicketsData, leaves: leavesData };
+        window.setFilter = function(type, btnElement) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active'); window.renderTable(); 
+        }
+
+        window.exportDatabase = function() {
+            const dataToExport = { users: window.systemUsers, members: window.membersData, logs: window.systemLogs, tickets: window.poolTicketsData, leaves: window.leavesData };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport));
             const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", "Gym_Database_Backup.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click(); downloadAnchorNode.remove();
-            addLog("قام بتصدير (تحميل) نسخة احتياطية");
+            document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+            window.addLog("قام بتصدير (تحميل) نسخة احتياطية");
         }
 
-        function importDatabase() {
+        window.importDatabase = function() {
             const file = document.getElementById('importDbFile').files[0];
             if (!file) return alert("الرجاء اختيار ملف قاعدة البيانات أولاً!");
-            if(confirm("تحذير: استيراد قاعدة بيانات سيمسح البيانات الحالية. هل أنت متأكد؟")) {
+            if(confirm("تحذير: استيراد قاعدة بيانات سيمسح البيانات السحابية الحالية. هل أنت متأكد؟")) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
                         const importedData = JSON.parse(e.target.result);
                         if(importedData.users && importedData.members) {
-                            systemUsers = importedData.users;
-                            membersData = importedData.members;
-                            systemLogs = importedData.logs || []; poolTicketsData = importedData.tickets || {totalCount:0, totalMoney:0}; leavesData = importedData.leaves || [];
-                            saveAllData();
-                            alert("تم استرجاع قاعدة البيانات بنجاح! سيتم تحديث الصفحة."); window.location.reload();
+                            window.systemUsers = importedData.users;
+                            window.membersData = importedData.members;
+                            window.systemLogs = importedData.logs || []; window.poolTicketsData = importedData.tickets || {totalCount:0, totalMoney:0}; window.leavesData = importedData.leaves || [];
+                            window.saveAllData(); alert("تم استرجاع قاعدة البيانات ورفعها للسحابة بنجاح!");
                         } else { alert("الملف غير صالح."); }
                     } catch (err) { alert("حدث خطأ أثناء القراءة."); }
                 }; reader.readAsText(file);
             }
         }
 
-        function addLog(action) {
+        window.addLog = function(action) {
             const time = new Date().toLocaleString('ar-SA');
-            const userName = loggedInUser ? loggedInUser.name : 'النظام';
-            systemLogs.unshift({ time, action, user: userName }); if(systemLogs.length > 100) systemLogs.pop();
-            saveAllData(); renderLogsUI();
+            const userName = window.loggedInUser ? window.loggedInUser.name : 'النظام';
+            window.systemLogs.unshift({ time, action, user: userName }); if(window.systemLogs.length > 100) window.systemLogs.pop();
+            window.saveAllData(); // سينعكس فوراً عبر onSnapshot
         }
 
-        function toggleAccordion(btn) {
+        window.toggleAccordion = function(btn) {
             btn.classList.toggle("active");
             let panel = btn.nextElementSibling;
-            if (panel.style.display === "block") { panel.style.display = "none"; } else { panel.style.display = "block"; }
+            panel.style.display = panel.style.display === "block" ? "none" : "block";
         }
 
-        // --- نظام تسجيل الدخول والجلسات ---
-        window.onload = () => { 
-            if (loggedInUser) activateSession();
-            else activatePublicSession(); // الوضع العام للزوار
-        };
+        window.openLoginPage = function() { document.getElementById('loginPage').style.display = 'flex'; }
+        window.closeLoginPage = function() { document.getElementById('loginPage').style.display = 'none'; }
 
-        function openLoginPage() { document.getElementById('loginPage').style.display = 'flex'; }
-        function closeLoginPage() { document.getElementById('loginPage').style.display = 'none'; }
-
-        function activatePublicSession() {
+        window.activatePublicSession = function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboardPage').style.display = 'block';
             document.getElementById('btnLoginHeader').style.display = 'inline-block';
@@ -711,44 +748,44 @@
             document.getElementById('addMemberSection').style.display = 'none';
             document.getElementById('welcomeText').style.display = 'none';
             document.getElementById('notificationBanner').style.display = 'none';
-            renderTable();
+            window.renderTable();
         }
 
-        function processLogin() {
+        window.processLogin = function() {
             const email = document.getElementById('loginEmail').value;
             const pass = document.getElementById('loginPass').value;
-            const user = systemUsers.find(u => u.email === email && u.pass === pass);
+            const user = window.systemUsers.find(u => u.email === email && u.pass === pass);
             if (user) { 
-                loggedInUser = user; saveAllData(); addLog('تسجيل دخول ناجح للنظام'); 
-                activateSession();
+                window.loggedInUser = user; window.saveAllData(); window.addLog('تسجيل دخول ناجح للنظام'); 
+                window.activateSession();
             } else { 
                 document.getElementById('loginError').style.display = 'block';
             }
         }
 
-        function processLogout() {
-            addLog('تسجيل خروج من النظام');
-            loggedInUser = null; saveAllData();
-            document.getElementById('loginEmail').value = ''; document.getElementById('loginPass').value = ''; closeAdminSidebar();
-            activatePublicSession();
+        window.processLogout = function() {
+            window.addLog('تسجيل خروج من النظام');
+            window.loggedInUser = null; window.saveAllData();
+            document.getElementById('loginEmail').value = ''; document.getElementById('loginPass').value = ''; window.closeAdminSidebar();
+            window.activatePublicSession();
         }
 
-        function getRoleDisplayNames(rolesArray) { return rolesArray.map(r => RoleNames[r]).join(' + '); }
+        window.getRoleDisplayNames = function(rolesArray) { return rolesArray.map(r => RoleNames[r]).join(' + '); }
 
-        function activateSession() {
+        window.activateSession = function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboardPage').style.display = 'block'; 
             document.getElementById('loginError').style.display = 'none';
             document.getElementById('btnLoginHeader').style.display = 'none';
             document.getElementById('btnLogout').style.display = 'inline-block';
             document.getElementById('welcomeText').style.display = 'block';
-            document.getElementById('currentUserNameDisplay').innerText = loggedInUser.name;
-            document.getElementById('currentUserRoleDisplay').innerText = `[ ${getRoleDisplayNames(loggedInUser.roles)} ]`;
-            applyRolePermissions(); renderTable(); renderLeavesTable();
+            document.getElementById('currentUserNameDisplay').innerText = window.loggedInUser.name;
+            document.getElementById('currentUserRoleDisplay').innerText = `[ ${window.getRoleDisplayNames(window.loggedInUser.roles)} ]`;
+            window.applyRolePermissions(); window.renderTable(); window.renderLeavesTable();
         }
 
-        function applyRolePermissions() {
-            const roles = loggedInUser.roles;
+        window.applyRolePermissions = function() {
+            const roles = window.loggedInUser.roles;
             const adminDashboard = document.getElementById('adminDashboard'); const addMemberSection = document.getElementById('addMemberSection');
             const btnAdminPanel = document.getElementById('btnAdminPanel'); const poolTicketManager = document.getElementById('poolTicketManager');
             const accAddUser = document.getElementById('accAddUser'); const panelAddUser = document.getElementById('panelAddUser');
@@ -760,19 +797,17 @@
             const moneyDisplays = document.querySelectorAll('.money-val');
             const poolTicketMoneyDisplay = document.getElementById('poolTicketMoneyDisplay');
 
-            // إخفاء النماذج والإدارة مبدئياً
             adminDashboard.style.display = 'none'; addMemberSection.style.display = 'none'; btnAdminPanel.style.display = 'none'; poolTicketManager.style.display = 'none';
             accAddUser.style.display = 'none'; accManageUsers.style.display = 'none'; accLogs.style.display = 'none'; accLeaves.style.display = 'none'; accDatabase.style.display = 'none';
             
-            let isAdmin = roles.includes('admin');
-            let isAcc = roles.includes('accountant_1') || roles.includes('accountant_2');
+            let isAdmin = roles.includes('admin'); let isAcc = roles.includes('accountant_1') || roles.includes('accountant_2');
             if (isAdmin) {
                 adminDashboard.style.display = 'block'; addMemberSection.style.display = 'block'; btnAdminPanel.style.display = 'block'; poolTicketManager.style.display = 'flex';
                 accAddUser.style.display = 'block'; accManageUsers.style.display = 'block'; accLogs.style.display = 'block'; accLeaves.style.display = 'block'; accDatabase.style.display = 'block';
                 if(btnGenerateReport) btnGenerateReport.style.display = 'inline-block';
                 moneyDisplays.forEach(el => el.style.display = 'block');
                 if(poolTicketMoneyDisplay) poolTicketMoneyDisplay.style.display = 'inline';
-                renderUsersUI(); renderLogsUI();
+                window.renderUsersUI(); window.renderLogsUI();
             } else if (isAcc) {
                 addMemberSection.style.display = 'block'; adminDashboard.style.display = 'block'; poolTicketManager.style.display = 'flex'; 
                 btnAdminPanel.style.display = 'block'; accLeaves.style.display = 'block'; 
@@ -783,8 +818,7 @@
 
             const filterBtns = document.querySelectorAll('.filter-btn');
             filterBtns.forEach(btn => {
-                const text = btn.innerText.trim();
-                let showBtn = false;
+                const text = btn.innerText.trim(); let showBtn = false;
                 if (isAdmin || isAcc) { showBtn = true; } else {
                     if (text === 'الكل' || text === 'شامل' || text === 'شامل مع ساونا') showBtn = true;
                     if (roles.includes('coach_iron') && text === 'حديد') showBtn = true;
@@ -796,88 +830,83 @@
             });
         }
 
-        // --- إدارة التذاكر ---
-        function adjustTicket(val) { tempTicketCount += val; if(tempTicketCount < 1) tempTicketCount = 1; document.getElementById('currentTicketCount').innerText = tempTicketCount; }
-        function savePoolTickets() {
+        window.adjustTicket = function(val) { tempTicketCount += val; if(tempTicketCount < 1) tempTicketCount = 1; document.getElementById('currentTicketCount').innerText = tempTicketCount; }
+        window.savePoolTickets = function() {
             const price = parseFloat(document.getElementById('ticketPrice').value) || 0; const revenue = tempTicketCount * price;
-            poolTicketsData.totalCount += tempTicketCount; poolTicketsData.totalMoney += revenue;
-            addLog(`إضافة تذاكر مسبح: ${tempTicketCount} تذكرة بـ ${revenue} ريال`);
-            saveAllData(); tempTicketCount = 1; document.getElementById('currentTicketCount').innerText = tempTicketCount; renderTable(); alert('تم حفظ مبيعات التذاكر');
+            window.poolTicketsData.totalCount += tempTicketCount; window.poolTicketsData.totalMoney += revenue;
+            window.addLog(`إضافة تذاكر مسبح: ${tempTicketCount} تذكرة بـ ${revenue} ريال`);
+            window.saveAllData(); tempTicketCount = 1; document.getElementById('currentTicketCount').innerText = tempTicketCount; alert('تم حفظ مبيعات التذاكر');
         }
-        function clearPoolTickets() {
+        window.clearPoolTickets = function() {
             if(confirm("هل أنت متأكد من مسح جميع مبيعات التذاكر بالكامل؟ لا يمكن التراجع!")) {
-                poolTicketsData.totalCount = 0; poolTicketsData.totalMoney = 0; addLog("تم مسح مبيعات تذاكر المسبح"); saveAllData(); renderTable();
+                window.poolTicketsData.totalCount = 0; window.poolTicketsData.totalMoney = 0; window.addLog("تم مسح مبيعات تذاكر المسبح"); window.saveAllData();
             }
         }
 
-        // --- إدارة الإجازات ---
         document.getElementById('addLeaveForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const leave = { id: Date.now(), name: document.getElementById('leaveName').value, start: document.getElementById('leaveStart').value, end: document.getElementById('leaveEnd').value };
-            leavesData.push(leave); addLog(`تسجيل إجازة للمشترك: ${leave.name}`); saveAllData(); renderLeavesTable(); this.reset();
+            window.leavesData.push(leave); window.addLog(`تسجيل إجازة للمشترك: ${leave.name}`); window.saveAllData(); this.reset();
         });
-        function renderLeavesTable() {
+        window.renderLeavesTable = function() {
             const tbody = document.querySelector('#leavesTable tbody'); tbody.innerHTML = '';
-            leavesData.forEach(leave => {
+            window.leavesData.forEach(leave => {
                 const deleteBtn = `<button class="btn-delete" style="padding:4px 8px; font-size:11px; border-radius:3px;" onclick="deleteLeave(${leave.id})">حذف</button>`;
                 tbody.innerHTML += `<tr style="border-bottom: 1px solid rgba(0,0,0,0.1);"><td style="padding:5px 0;">${leave.name}</td><td style="padding:5px 0;">${leave.start}</td><td style="padding:5px 0;">${leave.end}</td><td style="padding:5px 0;">${deleteBtn}</td></tr>`;
             });
         }
-        function deleteLeave(id) { if(confirm('تأكيد حذف هذه الإجازة؟')) { leavesData = leavesData.filter(l => l.id !== id); saveAllData(); renderLeavesTable(); } }
+        window.deleteLeave = function(id) { if(confirm('تأكيد حذف هذه الإجازة؟')) { window.leavesData = window.leavesData.filter(l => l.id !== id); window.saveAllData(); } }
 
-        // --- لوحة الإدارة الجانبية والتعديل ---
-        let isSidebarOpen = false;
-        function toggleAdminSidebar() { const sidebar = document.getElementById('adminSidebarPanel'); if(isSidebarOpen) { closeAdminSidebar(); } else { sidebar.style.right = '0'; isSidebarOpen = true; } }
-        function closeAdminSidebar() { document.getElementById('adminSidebarPanel').style.right = '-450px'; isSidebarOpen = false; }
+        window.toggleAdminSidebar = function() { const sidebar = document.getElementById('adminSidebarPanel'); if(isSidebarOpen) { window.closeAdminSidebar(); } else { sidebar.style.right = '0'; isSidebarOpen = true; } }
+        window.closeAdminSidebar = function() { document.getElementById('adminSidebarPanel').style.right = '-450px'; isSidebarOpen = false; }
 
-        function addNewUser() {
-            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية إضافة مستخدمين أو منح رتب!');
+        window.addNewUser = function() {
+            if(!window.loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية إضافة مستخدمين!');
             const name = document.getElementById('newUserName').value, email = document.getElementById('newUserEmail').value, pass = document.getElementById('newUserPass').value;
             const selectedRoles = Array.from(document.querySelectorAll('.role-cb:checked')).map(cb => cb.value);
             if(!name || !email || !pass || selectedRoles.length === 0) return alert('يرجى تعبئة الحقول واختيار رتبة واحدة على الأقل');
-            systemUsers.push({ id: Date.now(), name, email, pass, roles: selectedRoles }); addLog(`إضافة مستخدم: ${name}`);
-            saveAllData(); renderUsersUI(); document.getElementById('newUserName').value = ''; document.getElementById('newUserEmail').value = ''; document.getElementById('newUserPass').value = '';
+            window.systemUsers.push({ id: Date.now(), name, email, pass, roles: selectedRoles }); window.addLog(`إضافة مستخدم: ${name}`);
+            window.saveAllData(); document.getElementById('newUserName').value = ''; document.getElementById('newUserEmail').value = ''; document.getElementById('newUserPass').value = '';
             document.querySelectorAll('.role-cb').forEach(cb => cb.checked = false);
         }
 
-        function deleteUser(id) {
-            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة!');
-            const user = systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('عذراً، لا يمكن حذف المدير الأساسي!');
-            if(confirm('تأكيد حذف هذا المستخدم؟')) { systemUsers = systemUsers.filter(u => u.id !== id); addLog(`حذف المستخدم: ${user.name}`); saveAllData(); renderUsersUI(); }
+        window.deleteUser = function(id) {
+            if(!window.loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة!');
+            const user = window.systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('عذراً، لا يمكن حذف المدير الأساسي!');
+            if(confirm('تأكيد حذف هذا المستخدم؟')) { window.systemUsers = window.systemUsers.filter(u => u.id !== id); window.addLog(`حذف المستخدم: ${user.name}`); window.saveAllData(); }
         }
 
-        function openEditModal(id) {
-            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية تعديل الرتب!');
-            const user = systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('لا يمكن التعديل على صلاحيات المدير الأساسي!');
+        window.openEditModal = function(id) {
+            if(!window.loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة: المدير العام فقط يمتلك صلاحية تعديل الرتب!');
+            const user = window.systemUsers.find(u => u.id === id); if(user.email === 'yasserbaker15@gmail.com') return alert('لا يمكن التعديل على صلاحيات المدير الأساسي!');
             document.getElementById('editUserId').value = user.id; document.getElementById('editUserName').value = user.name; document.getElementById('editUserPass').value = user.pass;
             document.querySelectorAll('.edit-role-cb').forEach(cb => { cb.checked = user.roles.includes(cb.value); }); document.getElementById('editUserModal').style.display = 'flex';
         }
 
-        function saveEditedUser() {
-            if(!loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة!');
-            const id = parseInt(document.getElementById('editUserId').value); const user = systemUsers.find(u => u.id === id);
+        window.saveEditedUser = function() {
+            if(!window.loggedInUser.roles.includes('admin')) return alert('صلاحية مرفوضة!');
+            const id = parseInt(document.getElementById('editUserId').value); const user = window.systemUsers.find(u => u.id === id);
             const selectedRoles = Array.from(document.querySelectorAll('.edit-role-cb:checked')).map(cb => cb.value);
             if(selectedRoles.length === 0) return alert('يجب اختيار رتبة واحدة على الأقل!');
             user.name = document.getElementById('editUserName').value; user.pass = document.getElementById('editUserPass').value; user.roles = selectedRoles;
-            addLog(`تعديل بيانات المستخدم: ${user.name}`); saveAllData(); renderUsersUI(); closeEditModal(); alert('تم حفظ التعديلات');
-            if(loggedInUser && loggedInUser.id === user.id) { loggedInUser = user; activateSession(); }
+            window.addLog(`تعديل بيانات المستخدم: ${user.name}`); window.saveAllData(); window.closeEditModal(); alert('تم حفظ التعديلات');
+            if(window.loggedInUser && window.loggedInUser.id === user.id) { window.loggedInUser = user; window.activateSession(); }
         }
-        function closeEditModal() { document.getElementById('editUserModal').style.display = 'none'; }
+        window.closeEditModal = function() { document.getElementById('editUserModal').style.display = 'none'; }
 
-        function renderUsersUI() {
+        window.renderUsersUI = function() {
             const container = document.getElementById('usersListContainer'); container.innerHTML = '';
-            systemUsers.forEach(u => {
+            window.systemUsers.forEach(u => {
                 let badges = u.roles.map(r => `<span class="badge">${RoleNames[r]}</span>`).join('');
                 let actionBtns = u.email !== 'yasserbaker15@gmail.com' ? `
                     <div style="display:flex; gap:8px;"><button class="btn-action" style="background:var(--info-color); color:white; padding:6px 12px; font-size:13px;" onclick="openEditModal(${u.id})">تعديل</button><button class="btn-action" style="background:var(--danger-color); color:white; padding:6px 12px; font-size:13px;" onclick="deleteUser(${u.id})">حذف</button></div>` : `<span style="font-size:12px; color:var(--theme-yellow); font-weight:bold;">المالك الأساسي</span>`;
                 container.innerHTML += `<div class="user-item"><div><strong style="font-size:16px;">${u.name}</strong><br><div style="margin:5px 0;">${badges}</div><span style="font-size:12px; color:#aaa;">${u.email}</span></div> ${actionBtns}</div>`;
             });
         }
-        function renderLogsUI() { const container = document.getElementById('logsContainer'); container.innerHTML = '';
-            systemLogs.forEach(log => { container.innerHTML += `<div class="log-item"><span class="log-time">${log.time}</span><strong>${log.user}:</strong> ${log.action}</div>`; });
+        window.renderLogsUI = function() { const container = document.getElementById('logsContainer'); container.innerHTML = '';
+            window.systemLogs.forEach(log => { container.innerHTML += `<div class="log-item"><span class="log-time">${log.time}</span><strong>${log.user}:</strong> ${log.action}</div>`; });
         }
 
-        // --- معالجة المشتركين ورفع الصور باستخدام ImgBB ---
         document.getElementById('addMemberForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('memberImage'); let imageSrc = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; 
@@ -885,7 +914,6 @@
 
             if (fileInput.files && fileInput.files[0]) {
                 const imgbbKey = '0351444194825d29488bd1c566dfc6f1';
-                if (imgbbKey === 'YOUR_IMGBB_API_KEY') { alert('⚠️ تنبيه: يرجى وضع مفتاح ImgBB الخاص بك'); saveMemberDataToSystem(imageSrc); return; }
                 submitBtn.innerHTML = '⏳ جاري رفع الصورة... يرجى الانتظار'; submitBtn.disabled = true; submitBtn.style.opacity = '0.7';
                 const formData = new FormData(); formData.append('image', fileInput.files[0]);
                 try {
@@ -895,33 +923,32 @@
                 } catch (error) { console.error('ImgBB Error:', error); alert('فشل الاتصال بخادم الصور. يرجى التأكد من اتصال الإنترنت.');
                 } finally { submitBtn.innerHTML = originalBtnText; submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
             }
-            saveMemberDataToSystem(imageSrc);
+            window.saveMemberDataToSystem(imageSrc);
         });
 
-        function saveMemberDataToSystem(imgSrc) {
+        window.saveMemberDataToSystem = function(imgSrc) {
             const name = document.getElementById('memberName').value;
             const newMember = {
                 id_row: Date.now(), img: imgSrc, name: name, id_num: document.getElementById('memberID').value, phone: document.getElementById('memberPhone').value,
                 emergency: document.getElementById('memberEmergency').value || 'لا يوجد', subscription: document.getElementById('memberSubscription').value,
                 payment: document.getElementById('memberPayment').value, price: parseFloat(document.getElementById('memberPrice').value) || 0, start: document.getElementById('memberStart').value, end: document.getElementById('memberEnd').value
             };
-            membersData.unshift(newMember);
-            addLog(`تسجيل اشتراك جديد: ${name} (${newMember.subscription})`); saveAllData(); renderTable(); document.getElementById('addMemberForm').reset();
+            window.membersData.unshift(newMember);
+            window.addLog(`تسجيل اشتراك جديد: ${name} (${newMember.subscription})`); window.saveAllData(); document.getElementById('addMemberForm').reset();
         }
 
-        function renderTable() {
+        window.renderTable = function() {
             const thead = document.getElementById('tableHeaders');
             const tbody = document.querySelector('#membersTable tbody'); tbody.innerHTML = '';
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
             
-            let isLoggedIn = loggedInUser !== null;
-            let roles = isLoggedIn ? loggedInUser.roles : [];
+            let isLoggedIn = window.loggedInUser !== null;
+            let roles = isLoggedIn ? window.loggedInUser.roles : [];
             let isAdmin = isLoggedIn && roles.includes('admin');
             let isAcc = isLoggedIn && (roles.includes('accountant_1') || roles.includes('accountant_2'));
             let hasAdminOrFinanceView = isAdmin || isAcc;
 
             if (!isLoggedIn) {
-                // عرض الزوار (تمت إضافة عمود الصورة هنا)
                 thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الاشتراك</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th>`;
             } else if (isAdmin) { 
                 thead.innerHTML = `<th>الصورة</th><th>الاسم</th><th>الهوية</th><th>الجوال</th><th>الاشتراك</th><th>الدفع</th><th>المبلغ</th><th>البدء</th><th>الانتهاء</th><th>الحالة</th><th class="action-column">إجراءات</th>`;
@@ -943,23 +970,18 @@
                 'بوكسنق': { count: 0, money: 0 }, 'شامل': { count: 0, money: 0 }, 'شامل مع ساونا': { count: 0, money: 0 }
             };
 
-            membersData.forEach(member => {
+            window.membersData.forEach(member => {
                 const endDate = new Date(member.end); const isExpired = endDate < today; if(isExpired) expiredCount++;
                 if(stats[member.subscription] !== undefined) { stats[member.subscription].count++; stats[member.subscription].money += Number(member.price) || 0; }
                 
                 let showRow = false;
-                
-                if (!isLoggedIn) {
-                    showRow = true; // الزائر يرى الجميع (بناءً على الفلتر)
-                } else if (hasAdminOrFinanceView) { 
+                if (!isLoggedIn) { showRow = true; } 
+                else if (hasAdminOrFinanceView) { 
                     showRow = true; 
                     if (member.subscription === 'تعليم سباحة' && !isAdmin && !isAcc && !roles.includes('coach_swim')) showRow = false; 
-                } else if (allowedTypes.includes(member.subscription)) { 
-                    showRow = true; 
-                }
+                } else if (allowedTypes.includes(member.subscription)) { showRow = true; }
 
                 if (showRow && currentFilter !== 'all') { if (member.subscription !== currentFilter) { showRow = false; } }
-                
                 if (showRow && searchVal !== '') {
                     const nameMatch = member.name.toLowerCase().includes(searchVal); 
                     const idMatch = member.id_num && member.id_num.includes(searchVal);
@@ -973,7 +995,6 @@
                     const expiredLabel = isExpired ? `<span class="expired-label">(انتهى الاشتراك)</span>` : '';
                     
                     if (!isLoggedIn) {
-                        // عرض الزوار (تمت إضافة حقل الصورة هنا)
                         row.innerHTML = `<td><img src="${member.img}" class="member-img"></td><td style="font-weight:bold;">${member.name}</td><td><span class="badge" style="font-size:12px;">${member.subscription}</span></td><td>${member.start}</td><td class="${isExpired ? 'expired-text' : ''}">${member.end}</td><td class="${isExpired ? 'expired-text' : ''}">${isExpired ? 'منتهي ❌' : 'فعال ✅'}</td>`;
                     } else if (isAdmin) {
                         const deleteBtnHtml = `<button class="btn-delete" onclick="deleteMember(${member.id_row}, '${member.name}')">حذف</button>`;
@@ -986,12 +1007,13 @@
                     tbody.appendChild(row);
                 }
             });
+            
             if(hasAdminOrFinanceView) {
                 ['iron', 'fitness', 'swim', 'swimedu', 'boxing', 'all', 'sauna'].forEach(type => {
                     let mapKey = type==='iron'?'حديد':type==='fitness'?'لياقة':type==='swim'?'سباحة':type==='swimedu'?'تعليم سباحة':type==='boxing'?'بوكسنق':type==='all'?'شامل':'شامل مع ساونا';
                     document.getElementById(`stat-${type}-count`).innerText = stats[mapKey].count; document.getElementById(`stat-${type}-money`).innerText = stats[mapKey].money;
                 });
-                document.getElementById('totalTicketsCount').innerText = poolTicketsData.totalCount; document.getElementById('totalTicketsMoney').innerText = poolTicketsData.totalMoney;
+                document.getElementById('totalTicketsCount').innerText = window.poolTicketsData.totalCount; document.getElementById('totalTicketsMoney').innerText = window.poolTicketsData.totalMoney;
             }
 
             const banner = document.getElementById('notificationBanner');
@@ -999,52 +1021,26 @@
             } else { banner.style.display = 'none'; }
         }
 
-        function deleteMember(id, name) { if(loggedInUser.roles.includes('admin') && confirm('تأكيد الحذف النهائي للمشترك؟')) { membersData = membersData.filter(m => m.id_row !== id); addLog(`تم حذف اشتراك: ${name}`); saveAllData(); renderTable(); } }
+        window.deleteMember = function(id, name) { if(window.loggedInUser.roles.includes('admin') && confirm('تأكيد الحذف النهائي للمشترك؟')) { window.membersData = window.membersData.filter(m => m.id_row !== id); window.addLog(`تم حذف اشتراك: ${name}`); window.saveAllData(); } }
 
-        // --- التقرير الشامل ---
-        function generateReport() {
+        window.generateReport = function() {
             const tbody = document.getElementById('reportTableBody'); tbody.innerHTML = '';
             document.getElementById('reportDateText').innerText = `تاريخ التقرير: ${new Date().toLocaleString('ar-SA')}`;
             let stats = {
                 'الحديد': { count: 0, money: 0 }, 'اللياقة': { count: 0, money: 0 }, 'السباحة': { count: 0, money: 0 }, 'تعليم السباحة': {count:0, money:0},
                 'البوكسنق 🥊': { count: 0, money: 0 }, 'الشامل': { count: 0, money: 0 }, 'شامل مع ساونا': { count: 0, money: 0 }
             };
-            membersData.forEach(m => {
+            window.membersData.forEach(m => {
                 let key = m.subscription === 'حديد' ? 'الحديد' : m.subscription === 'لياقة' ? 'اللياقة' : m.subscription === 'سباحة' ? 'السباحة' : m.subscription === 'تعليم سباحة' ? 'تعليم السباحة' : m.subscription === 'بوكسنق' ? 'البوكسنق 🥊' : m.subscription === 'شامل' ? 'الشامل' : 'شامل مع ساونا';
                 stats[key].count++; stats[key].money += Number(m.price) || 0;
             });
             let totalMoney = 0;
             for (const [sport, data] of Object.entries(stats)) { totalMoney += data.money; tbody.innerHTML += `<tr><td>${sport}</td><td>${data.count}</td><td style="color:var(--success-color); font-weight:800; font-size:16px;">${data.money}</td></tr>`; }
-            totalMoney += poolTicketsData.totalMoney;
-            tbody.innerHTML += `<tr style="background:rgba(0,0,0,0.02);"><td>تذاكر المسبح اليومية 🎟️</td><td>${poolTicketsData.totalCount}</td><td style="color:var(--success-color); font-weight:800; font-size:16px;">${poolTicketsData.totalMoney}</td></tr>`;
+            totalMoney += window.poolTicketsData.totalMoney;
+            tbody.innerHTML += `<tr style="background:rgba(0,0,0,0.02);"><td>تذاكر المسبح اليومية 🎟️</td><td>${window.poolTicketsData.totalCount}</td><td style="color:var(--success-color); font-weight:800; font-size:16px;">${window.poolTicketsData.totalMoney}</td></tr>`;
             document.getElementById('reportTotalMoney').innerText = totalMoney; document.getElementById('reportModal').style.display = 'flex';
         }
-        function closeReport() { document.getElementById('reportModal').style.display = 'none'; }
-    </script>
-
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
-
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        const firebaseConfig = {
-            apiKey: "AIzaSyAvLBiowOIIazPEXHU0tKtO8BRBaZoeAPg",
-            authDomain: "ksa-arab.firebaseapp.com",
-            databaseURL: "https://ksa-arab-default-rtdb.firebaseio.com",
-            projectId: "ksa-arab",
-            storageBucket: "ksa-arab.firebasestorage.app",
-            messagingSenderId: "706218412262",
-            appId: "1:706218412262:web:79fb2e9a4e99ef2a159327",
-            measurementId: "G-FKRFTJ2N53"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
+        window.closeReport = function() { document.getElementById('reportModal').style.display = 'none'; }
     </script>
 </body>
 </html>
